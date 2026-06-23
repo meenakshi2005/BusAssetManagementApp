@@ -272,12 +272,14 @@ export default function Inventory() {
           <Text style={styles.emptyText}>No inventory found.</Text>
         ) : (
           <ScrollView>
-            {filteredInventory.map((item) => (
-              <View key={item.id} style={styles.card}>
+            {filteredInventory.map((item) => {
+              const isAssigned = !!item.device_id || !!item.box_id || item.status === 'Assigned';
+              return (
+              <View key={item.id} style={[styles.card, { borderLeftColor: isAssigned ? '#38a169' : '#e53e3e' }]}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>{item.category} - {item.vendor}</Text>
-                  <View style={[styles.statusBadge, item.status === 'Active' ? styles.statusActive : styles.statusInactive]}>
-                    <Text style={styles.statusText}>{item.status || 'Unknown'}</Text>
+                  <View style={[styles.statusBadge, isAssigned ? styles.statusActive : styles.statusInactive]}>
+                    <Text style={styles.statusText}>{item.status || (isAssigned ? 'Assigned' : 'In Stock')}</Text>
                   </View>
                 </View>
                 {/* <Text style={styles.cardDesc}><Text style={styles.bold}>Device ID:</Text> {item.device_id || 'Not Assigned'}</Text> */}
@@ -292,7 +294,7 @@ export default function Inventory() {
                 <Text style={styles.cardDesc}><Text style={styles.bold}>Notes:</Text> {item.notes}</Text>
 
                 <View style={styles.actionRow}>
-                  {(!item.device_id && !item.box_id && item.status !== 'Assigned') ? (
+                  {(!isAssigned) ? (
                     <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#e6fffa' }]} onPress={() => openScannerModal(item.id)}>
                       {/* <Feather name="camera" size={18} color="#319795" /> */}
                       <MaterialCommunityIcons name="qrcode-scan" size={18} color="#222a29ff" />
@@ -310,7 +312,7 @@ export default function Inventory() {
                   </View>
                 </View>
               </View>
-            ))}
+            )})}
             <View style={{ height: 20 }} />
           </ScrollView>
         )}
@@ -391,7 +393,7 @@ export default function Inventory() {
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Status</Text>
-                <TextInput style={styles.input} value={formData.status} onChangeText={(val) => handleInputChange('status', val)} placeholder="e.g. Active" />
+                <TextInput style={styles.input} value={formData.status} onChangeText={(val) => handleInputChange('status', val)} placeholder="e.g. In Stock" />
               </View>
             </View>
 
@@ -570,15 +572,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusActive: {
-    backgroundColor: '#c6f6d5',
+    backgroundColor: '#38a169',
   },
   statusInactive: {
-    backgroundColor: '#fed7d7',
+    backgroundColor: '#e53e3e',
   },
   statusText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1a202c',
+    color: '#fff',
   },
   cardDesc: {
     fontSize: 14,
