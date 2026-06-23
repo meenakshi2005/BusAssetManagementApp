@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Bus Asset Management",
+    "slug": "bus-asset-management",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "android": {
+      "package": "com.consultit.busassetmanagement"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "14319529-f3a2-4562-af96-5f12436fdb40"
+      }
+    }
+  }
+}
