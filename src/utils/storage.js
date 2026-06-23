@@ -58,7 +58,7 @@ export const getBusesAPI = async () => {
     return json.data || [];
   } catch (error) {
     console.error('getBusesAPI error:', error);
-    throw error;
+     throw error;
   }
 };
 

@@ -15,6 +15,7 @@ import {
 import { Feather ,MaterialCommunityIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import RNPickerSelect from 'react-native-picker-select';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   getComponentsAPI,
   createComponentAPI,
@@ -42,15 +43,26 @@ export default function Inventory() {
   const initialFormState = {
     category: '',
     vendor: 'Teltonika',
-    purchase_date: '2026-06-19',
-    warranty_months: '24',
+    purchase_date: '',
+    warranty_months: '',
     invoice_number: 'INV-2026-001',
-    status: 'In Stock',
+    status: '',
     notes: 'Installed near the driver dashboard.',
     device_id: '', // only used in Edit mode
+    position: '',
+    comp_id: 'COMP-GPS-001',
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS, close on Android
+    if (selectedDate) {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      handleInputChange('purchase_date', dateStr);
+    }
+  };
 
   useEffect(() => {
     fetchInventory();
@@ -85,6 +97,8 @@ export default function Inventory() {
       status: item.status || '',
       notes: item.notes || '',
       device_id: item.device_id || '',
+      position: item.position || '',
+      comp_id: item.comp_id || '',
     });
     setModalVisible(true);
   };
@@ -175,6 +189,8 @@ export default function Inventory() {
         invoice_number: formData.invoice_number,
         status: formData.status,
         notes: formData.notes,
+        position: formData.position,
+        comp_id: formData.comp_id,
       };
 
       if (editingItemId) {
@@ -266,6 +282,12 @@ export default function Inventory() {
                 </View>
                 {/* <Text style={styles.cardDesc}><Text style={styles.bold}>Device ID:</Text> {item.device_id || 'Not Assigned'}</Text> */}
                 <Text style={styles.cardDesc}><Text style={styles.bold}>Invoice:</Text> {item.invoice_number}</Text>
+                <Text style={styles.cardDesc}>
+                  <Text style={styles.bold}>Component ID:</Text> {item.comp_id || 'N/A'}
+                  {item.category && item.category.toLowerCase() === 'esp32' && (
+                    <Text> <Text style={styles.bold}>Position:</Text> {item.position || 'N/A'}</Text>
+                  )}
+                </Text>
                 <Text style={styles.cardDesc}><Text style={styles.bold}>Purchase Date:</Text> {item.purchase_date} ({item.warranty_months} mo warranty)</Text>
                 <Text style={styles.cardDesc}><Text style={styles.bold}>Notes:</Text> {item.notes}</Text>
 
@@ -325,6 +347,7 @@ export default function Inventory() {
                     { label: 'Hotspot', value: 'hotspot' },
                     { label: 'Pi', value: 'pi' },
                     { label: 'ESP32', value: 'esp32' },
+                    { label: 'Tracker', value: 'Tracker' },
                   ]}
                   value={formData.category}
                   style={pickerSelectStyles}
@@ -341,7 +364,19 @@ export default function Inventory() {
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Purchase Date</Text>
-                <TextInput style={styles.input} value={formData.purchase_date} onChangeText={(val) => handleInputChange('purchase_date', val)} placeholder="YYYY-MM-DD" />
+                <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+                  <Text style={{ color: formData.purchase_date ? '#2d3748' : '#a0aec0' }}>
+                    {formData.purchase_date || 'YYYY-MM-DD'}
+                  </Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={formData.purchase_date ? new Date(formData.purchase_date) : new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                  />
+                )}
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Warranty (Months)</Text>
@@ -357,6 +392,28 @@ export default function Inventory() {
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Status</Text>
                 <TextInput style={styles.input} value={formData.status} onChangeText={(val) => handleInputChange('status', val)} placeholder="e.g. Active" />
+              </View>
+            </View>
+
+            <View style={styles.inputRow}>
+              <View style={styles.inputHalf}>
+                <Text style={styles.label}>Component ID</Text>
+                <TextInput style={styles.input} value={formData.comp_id} onChangeText={(val) => handleInputChange('comp_id', val)} placeholder="e.g. COMP-GPS-001" />
+              </View>
+              <View style={styles.inputHalf}>
+                <Text style={styles.label}>Position</Text>
+                <RNPickerSelect
+                  onValueChange={(val) => handleInputChange('position', val)}
+                  items={[
+                    { label: 'Start', value: 'start' },
+                    { label: 'End', value: 'end' },
+                    { label: 'None', value: 'none' },
+                  ]}
+                  value={formData.position}
+                  style={pickerSelectStyles}
+                  placeholder={{ label: "Select Position...", value: "" }}
+                  useNativeAndroidPickerStyle={false}
+                />
               </View>
             </View>
 

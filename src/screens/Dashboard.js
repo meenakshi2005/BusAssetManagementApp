@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'rea
 
 export default function Dashboard({ navigation }) {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Bus Asset Management</Text>
       <Text style={styles.subtitle}>Select an action below to get started</Text>
 
