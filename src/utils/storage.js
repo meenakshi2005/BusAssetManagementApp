@@ -49,7 +49,7 @@ export const saveHistory = async (history) => {
 
 // --- Real API Flow for Bus Master ---
 
-const BASE_URL = 'http://143.244.140.108:8080';
+export const BASE_URL = 'http://143.244.140.108:8080';
 
 export const getBusesAPI = async () => {
   try {

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 
 export default function Dashboard({ navigation }) {
-  return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container}>
+  const [activeTab, setActiveTab] = useState('Master');
+
+  const renderMaster = () => (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer}>
       <Text style={styles.title}>Bus Asset Management</Text>
       <Text style={styles.subtitle}>Select an action below to get started</Text>
 
@@ -30,13 +32,59 @@ export default function Dashboard({ navigation }) {
       </View>
     </ScrollView>
   );
+
+  const renderAdmin = () => (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContainer}>
+      <Text style={styles.title}>Admin Modules</Text>
+      <Text style={styles.subtitle}>Select an administrative action</Text>
+
+      <View style={styles.grid}>
+        <TouchableOpacity style={[styles.card, { borderLeftColor: '#e53e3e', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Entry Logs')}>
+          <Text style={[styles.cardTitle, { color: '#e53e3e' }]}>📋 Entry Logs</Text>
+          <Text style={styles.cardDesc}>View bus entry and exit records</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.card, { borderLeftColor: '#805ad5', borderLeftWidth: 4 }]}
+          onPress={() => navigation.navigate('Face Captures')}
+        >
+          <Text style={[styles.cardTitle, { color: '#805ad5' }]}>🧑 Face Captures</Text>
+          <Text style={styles.cardDesc}>View face capture counter records</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.tabContainer}>
+           <TouchableOpacity 
+          style={[styles.tab, activeTab === 'Admin' && styles.activeTab]} 
+          onPress={() => setActiveTab('Admin')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Admin' && styles.activeTabText]}>History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'Master' && styles.activeTab]} 
+          onPress={() => setActiveTab('Master')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Master' && styles.activeTabText]}>Master</Text>
+        </TouchableOpacity>
+     
+      </View>
+      
+      {activeTab === 'Master' ? renderMaster() : renderAdmin()}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#f5f7fa',
+  },
+  scrollContainer: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: '#f5f7fa',
   },
   title: {
     fontSize: 26,
@@ -73,5 +121,29 @@ const styles = StyleSheet.create({
   cardDesc: {
     fontSize: 14,
     color: '#4a5568',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: '#3182ce',
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#718096',
+  },
+  activeTabText: {
+    color: '#3182ce',
   },
 });
