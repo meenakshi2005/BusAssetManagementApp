@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Feather ,MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import RNPickerSelect from 'react-native-picker-select';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -29,29 +29,29 @@ export default function Inventory() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [assignmentFilter, setAssignmentFilter] = useState('All');
-  
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItemId, setEditingItemId] = useState(null);
-  
+
   const [formLoading, setFormLoading] = useState(false);
-  
+
   const [scannerVisible, setScannerVisible] = useState(false);
   const [assigningComponentId, setAssigningComponentId] = useState(null);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  
- const initialFormState = {
-  category: 'GPS Tracker',
-  vendor: 'Teltonika',
-  purchase_date: '2026-07-01',
-  warranty_months: '24',
-  invoice_number: 'INV-2026-001',
-  status: 'Active',
-  notes: 'Installed near the driver dashboard.',
-  device_id: 'TEL-FMB920-001',
-  position: 'Driver Dashboard',
-  comp_id: 'COMP-GPS-001',
-};
+
+  const initialFormState = {
+    category: 'GPS Tracker',
+    vendor: 'Teltonika',
+    purchase_date: '2026-07-01',
+    warranty_months: '24',
+    invoice_number: 'INV-2026-001',
+    status: 'Active',
+    notes: 'Installed near the driver dashboard.',
+    device_id: 'TEL-FMB920-001',
+    position: 'Driver Dashboard',
+    comp_id: 'COMP-GPS-001',
+  };
 
   const [formData, setFormData] = useState(initialFormState);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -72,9 +72,12 @@ export default function Inventory() {
     setIsLoading(true);
     try {
       const data = await getComponentsAPI();
-      setInventory(data);
+      // Guard against the API returning null/undefined, which would
+      // otherwise crash every .filter()/.map() call on `inventory` below.
+      setInventory(Array.isArray(data) ? data : []);
     } catch (e) {
       Alert.alert('Error', 'Failed to fetch inventory.');
+      setInventory([]);
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +120,7 @@ export default function Inventory() {
           } catch (e) {
             Alert.alert('Error', e.message || 'Failed to delete item');
           }
-        }
+        },
       },
     ]);
   };
@@ -144,25 +147,27 @@ export default function Inventory() {
       fetchInventory();
     } catch (e) {
       let errorMessage = e.message || 'Failed to assign component';
-      
+
       // Parse backend category mismatch error
       // e.g. "Category 'gps' is not allowed in a SENSOR_BOX. Allowed: esp32, battery"
       const match = errorMessage.match(/Category '(.*?)' is not allowed in a (.*?)\. Allowed: (.*)/i);
-      
+
       if (match) {
         const category = match[1];
         // Format box type (e.g. SENSOR_BOX to Sensor Box)
         const boxTypeParts = match[2].split('_');
-        const boxType = boxTypeParts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+        const boxType = boxTypeParts
+          .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+          .join(' ');
         const allowed = match[3];
-        
-        errorMessage = `Unable to assign the selected component to the ${boxType}." `;
-        
+
+        errorMessage = `Unable to assign "${category}" to the ${boxType}. Allowed categories: ${allowed}.`;
+
         Alert.alert('Assignment Failed', errorMessage);
       } else {
         Alert.alert('Error', errorMessage);
       }
-      
+
       setScannerVisible(false);
     } finally {
       setDeviceLoading(false);
@@ -178,7 +183,7 @@ export default function Inventory() {
       Alert.alert('Validation Error', 'Category and Vendor are required fields.');
       return;
     }
-    
+
     setFormLoading(true);
     try {
       const payload = {
@@ -211,13 +216,13 @@ export default function Inventory() {
     }
   };
 
-  const filteredInventory = inventory.filter((item) => {
-    const searchString = `${item.category} ${item.vendor} ${item.device_id}`.toLowerCase();
+  const filteredInventory = (inventory || []).filter((item) => {
+    const searchString = `${item.category || ''} ${item.vendor || ''} ${item.device_id || ''}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    
+
     const isAssigned = !!item.device_id || !!item.box_id || item.status === 'Assigned';
     let matchesFilter = true;
-    
+
     if (assignmentFilter === 'Assigned') {
       matchesFilter = isAssigned;
     } else if (assignmentFilter === 'Unassigned') {
@@ -244,23 +249,27 @@ export default function Inventory() {
 
       {/* Filters */}
       <View style={styles.filterRow}>
-        <TouchableOpacity 
-          style={[styles.filterTab, assignmentFilter === 'All' && styles.filterTabActive]} 
+        <TouchableOpacity
+          style={[styles.filterTab, assignmentFilter === 'All' && styles.filterTabActive]}
           onPress={() => setAssignmentFilter('All')}
         >
           <Text style={[styles.filterTabText, assignmentFilter === 'All' && styles.filterTabTextActive]}>All</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.filterTab, assignmentFilter === 'Assigned' && styles.filterTabActive]} 
+        <TouchableOpacity
+          style={[styles.filterTab, assignmentFilter === 'Assigned' && styles.filterTabActive]}
           onPress={() => setAssignmentFilter('Assigned')}
         >
-          <Text style={[styles.filterTabText, assignmentFilter === 'Assigned' && styles.filterTabTextActive]}>Assigned</Text>
+          <Text style={[styles.filterTabText, assignmentFilter === 'Assigned' && styles.filterTabTextActive]}>
+            Assigned
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.filterTab, assignmentFilter === 'Unassigned' && styles.filterTabActive]} 
+        <TouchableOpacity
+          style={[styles.filterTab, assignmentFilter === 'Unassigned' && styles.filterTabActive]}
           onPress={() => setAssignmentFilter('Unassigned')}
         >
-          <Text style={[styles.filterTabText, assignmentFilter === 'Unassigned' && styles.filterTabTextActive]}>Unassigned</Text>
+          <Text style={[styles.filterTabText, assignmentFilter === 'Unassigned' && styles.filterTabTextActive]}>
+            Unassigned
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -275,44 +284,64 @@ export default function Inventory() {
             {filteredInventory.map((item) => {
               const isAssigned = !!item.device_id || !!item.box_id || item.status === 'Assigned';
               return (
-              <View key={item.id} style={[styles.card, { borderLeftColor: isAssigned ? '#38a169' : '#e53e3e' }]}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>{item.category} - {item.vendor}</Text>
-                  <View style={[styles.statusBadge, isAssigned ? styles.statusActive : styles.statusInactive]}>
-                    <Text style={styles.statusText}>{item.status || (isAssigned ? 'Assigned' : 'In Stock')}</Text>
+                <View
+                  key={item.id}
+                  style={[styles.card, { borderLeftColor: isAssigned ? '#38a169' : '#e53e3e' }]}
+                >
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardTitle}>
+                      {item.category} - {item.vendor}
+                    </Text>
+                    <View style={[styles.statusBadge, isAssigned ? styles.statusActive : styles.statusInactive]}>
+                      <Text style={styles.statusText}>{item.status || (isAssigned ? 'Assigned' : 'In Stock')}</Text>
+                    </View>
                   </View>
-                </View>
-                {/* <Text style={styles.cardDesc}><Text style={styles.bold}>Device ID:</Text> {item.device_id || 'Not Assigned'}</Text> */}
-                <Text style={styles.cardDesc}><Text style={styles.bold}>Invoice:</Text> {item.invoice_number}</Text>
-                <Text style={styles.cardDesc}>
-                  <Text style={styles.bold}>Component ID:</Text> {item.comp_id || 'N/A'}
-                  {item.category && item.category.toLowerCase() === 'esp32' && (
-                    <Text> <Text style={styles.bold}>Position:</Text> {item.position || 'N/A'}</Text>
-                  )}
-                </Text>
-                <Text style={styles.cardDesc}><Text style={styles.bold}>Purchase Date:</Text> {item.purchase_date} ({item.warranty_months} mo warranty)</Text>
-                <Text style={styles.cardDesc}><Text style={styles.bold}>Notes:</Text> {item.notes}</Text>
+                  <Text style={styles.cardDesc}>
+                    <Text style={styles.bold}>Invoice:</Text> {item.invoice_number}
+                  </Text>
+                  <Text style={styles.cardDesc}>
+                    <Text style={styles.bold}>Component ID:</Text> {item.comp_id || 'N/A'}
+                    {item.category && item.category.toLowerCase() === 'esp32' && (
+                      <Text>
+                        {' '}
+                        <Text style={styles.bold}>Position:</Text> {item.position || 'N/A'}
+                      </Text>
+                    )}
+                  </Text>
+                  <Text style={styles.cardDesc}>
+                    <Text style={styles.bold}>Purchase Date:</Text> {item.purchase_date} ({item.warranty_months} mo
+                    warranty)
+                  </Text>
+                  <Text style={styles.cardDesc}>
+                    <Text style={styles.bold}>Notes:</Text> {item.notes}
+                  </Text>
 
-                <View style={styles.actionRow}>
-                  {(!isAssigned) ? (
-                    <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#e6fffa' }]} onPress={() => openScannerModal(item.id)}>
-                      {/* <Feather name="camera" size={18} color="#319795" /> */}
-                      <MaterialCommunityIcons name="qrcode-scan" size={18} color="#222a29ff" />
-                    </TouchableOpacity>
-                  ) : (
-                    <View />
-                  )}
-                  <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity style={styles.iconButton} onPress={() => openEditModal(item)}>
-                      <Feather name="edit" size={18} color="#2b6cb0" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#fff5f5', marginRight: 0 }]} onPress={() => handleDelete(item.id)}>
-                      <Feather name="trash-2" size={18} color="#e53e3e" />
-                    </TouchableOpacity>
+                  <View style={styles.actionRow}>
+                    {!isAssigned ? (
+                      <TouchableOpacity
+                        style={[styles.iconButton, { backgroundColor: '#e6fffa' }]}
+                        onPress={() => openScannerModal(item.id)}
+                      >
+                        <MaterialCommunityIcons name="qrcode-scan" size={18} color="#222a29ff" />
+                      </TouchableOpacity>
+                    ) : (
+                      <View />
+                    )}
+                    <View style={{ flexDirection: 'row' }}>
+                      <TouchableOpacity style={styles.iconButton} onPress={() => openEditModal(item)}>
+                        <Feather name="edit" size={18} color="#2b6cb0" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.iconButton, { backgroundColor: '#fff5f5', marginRight: 0 }]}
+                        onPress={() => handleDelete(item.id)}
+                      >
+                        <Feather name="trash-2" size={18} color="#e53e3e" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-              </View>
-            )})}
+              );
+            })}
             <View style={{ height: 20 }} />
           </ScrollView>
         )}
@@ -328,12 +357,16 @@ export default function Inventory() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.formContainer}>
-            
             {/* Show Device ID ONLY in edit mode */}
             {editingItemId && (
               <View style={styles.inputFull}>
                 <Text style={styles.label}>Device ID</Text>
-                <TextInput style={styles.input} value={formData.device_id} onChangeText={(val) => handleInputChange('device_id', val)} placeholder="e.g. BUSGPS_NEW" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.device_id}
+                  onChangeText={(val) => handleInputChange('device_id', val)}
+                  placeholder="e.g. BUSGPS_NEW"
+                />
               </View>
             )}
 
@@ -353,13 +386,18 @@ export default function Inventory() {
                   ]}
                   value={formData.category}
                   style={pickerSelectStyles}
-                  placeholder={{ label: "Select Category...", value: "" }}
+                  placeholder={{ label: 'Select Category...', value: '' }}
                   useNativeAndroidPickerStyle={false}
                 />
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Vendor *</Text>
-                <TextInput style={styles.input} value={formData.vendor} onChangeText={(val) => handleInputChange('vendor', val)} placeholder="e.g. Teltonika" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.vendor}
+                  onChangeText={(val) => handleInputChange('vendor', val)}
+                  placeholder="e.g. Teltonika"
+                />
               </View>
             </View>
 
@@ -382,25 +420,46 @@ export default function Inventory() {
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Warranty (Months)</Text>
-                <TextInput style={styles.input} value={formData.warranty_months} onChangeText={(val) => handleInputChange('warranty_months', val)} placeholder="e.g. 24" keyboardType="numeric" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.warranty_months}
+                  onChangeText={(val) => handleInputChange('warranty_months', val)}
+                  placeholder="e.g. 24"
+                  keyboardType="numeric"
+                />
               </View>
             </View>
 
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Invoice Number</Text>
-                <TextInput style={styles.input} value={formData.invoice_number} onChangeText={(val) => handleInputChange('invoice_number', val)} placeholder="e.g. INV-001" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.invoice_number}
+                  onChangeText={(val) => handleInputChange('invoice_number', val)}
+                  placeholder="e.g. INV-001"
+                />
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Status</Text>
-                <TextInput style={styles.input} value={formData.status} onChangeText={(val) => handleInputChange('status', val)} placeholder="e.g. In Stock" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.status}
+                  onChangeText={(val) => handleInputChange('status', val)}
+                  placeholder="e.g. In Stock"
+                />
               </View>
             </View>
 
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Component ID</Text>
-                <TextInput style={styles.input} value={formData.comp_id} onChangeText={(val) => handleInputChange('comp_id', val)} placeholder="e.g. COMP-GPS-001" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.comp_id}
+                  onChangeText={(val) => handleInputChange('comp_id', val)}
+                  placeholder="e.g. COMP-GPS-001"
+                />
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Position</Text>
@@ -413,7 +472,7 @@ export default function Inventory() {
                   ]}
                   value={formData.position}
                   style={pickerSelectStyles}
-                  placeholder={{ label: "Select Position...", value: "" }}
+                  placeholder={{ label: 'Select Position...', value: '' }}
                   useNativeAndroidPickerStyle={false}
                 />
               </View>
@@ -421,7 +480,13 @@ export default function Inventory() {
 
             <View style={styles.inputFull}>
               <Text style={styles.label}>Notes</Text>
-              <TextInput style={[styles.input, { height: 80 }]} value={formData.notes} onChangeText={(val) => handleInputChange('notes', val)} placeholder="Additional notes..." multiline />
+              <TextInput
+                style={[styles.input, { height: 80 }]}
+                value={formData.notes}
+                onChangeText={(val) => handleInputChange('notes', val)}
+                placeholder="Additional notes..."
+                multiline
+              />
             </View>
 
             <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={formLoading}>
@@ -441,7 +506,7 @@ export default function Inventory() {
               <Feather name="x" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.cameraWrapper}>
             {scannerVisible && permission?.granted && (
               <CameraView
@@ -449,7 +514,7 @@ export default function Inventory() {
                 facing="back"
                 onBarcodeScanned={deviceLoading ? undefined : handleBarcodeScanned}
                 barcodeScannerSettings={{
-                  barcodeTypes: ["qr", "ean13", "ean8", "code128", "code39", "upc_e"],
+                  barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'upc_e'],
                 }}
               />
             )}
@@ -461,7 +526,7 @@ export default function Inventory() {
               </View>
             )}
           </View>
-          
+
           <View style={styles.scannerFooter}>
             <Text style={styles.scannerInstruction}>
               Point the camera at the Box's QR code to assign this component to it.

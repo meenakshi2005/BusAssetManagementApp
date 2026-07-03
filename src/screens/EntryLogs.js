@@ -14,8 +14,9 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { getEntryLogsAPI } from "../utils/entryLogsAPI";
 import { getBusesAPI } from "../utils/storage";
+import { getEntryLogsAPI } from "../utils/entryLogsAPI";
+import { getAllTripsAPI } from "../utils/tripAPI";
 
 // ─────────────────────────────────────────────────────────────
 //  THEME — Light
@@ -128,6 +129,15 @@ const makeToday5pm = () => {
   const d = new Date();
   d.setHours(17, 0, 0, 0);
   return d;
+};
+
+// Human-readable label for a trip in the dropdown
+const fmtTripLabel = (trip) => {
+  if (!trip) return "Trip";
+  const bus = trip.bus_no || "Unknown Bus";
+  const start = trip.start_datetime ? fmtDateOnly(trip.start_datetime) : "";
+  const time = trip.start_datetime ? fmtTimeOnly(trip.start_datetime) : "";
+  return `${bus} · ${start} ${time}`.trim();
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -322,12 +332,14 @@ function LogCard({ item }) {
 export default function EntryLogs() {
   // ── filters ───────────────────────────────────────
   const [selectedBus, setSelectedBus] = useState("");
+  const [selectedTrip, setSelectedTrip] = useState("");
   const [fromDate, setFromDate] = useState(makeToday8am);
   const [toDate, setToDate] = useState(makeToday5pm);
 
   // ── data ──────────────────────────────────────────
   const [logs, setLogs] = useState([]);
   const [busList, setBusList] = useState([]);
+  const [tripList, setTripList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -348,6 +360,7 @@ export default function EntryLogs() {
           limit,
           offset: newOffset,
           ...(selectedBus ? { bus_id: selectedBus } : {}),
+          ...(selectedTrip ? { trip_id: selectedTrip } : {}),
           ...(fromDate
             ? {
                 date: formatDateStr(fromDate),
@@ -378,7 +391,7 @@ export default function EntryLogs() {
         activeLoad.current = false;
       }
     },
-    [selectedBus, fromDate, toDate],
+    [selectedBus, selectedTrip, fromDate, toDate],
   );
 
   useEffect(() => {
@@ -393,9 +406,36 @@ export default function EntryLogs() {
         console.error("Failed to fetch buses:", err);
       }
     };
+
     fetchBuses();
     fetchLogs(0);
   }, []);
+
+  // ── trips list, scoped to the selected bus ─────────
+  // Refetches whenever selectedBus changes (GET /trips?bus_no=...),
+  // and falls back to all trips when no bus is selected.
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTrips = async () => {
+      try {
+        const data = await getAllTripsAPI(selectedBus || undefined);
+        const raw = data?.trips || data?.data || data || [];
+        const arr = Array.isArray(raw) ? raw : [];
+        if (!cancelled) setTripList(arr);
+      } catch (err) {
+        console.error("Failed to fetch trips:", err);
+      }
+    };
+
+    fetchTrips();
+    // Selecting a different bus invalidates the previously chosen trip
+    setSelectedTrip("");
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedBus]);
 
   const applyFilters = () => {
     setOffset(0);
@@ -450,7 +490,6 @@ export default function EntryLogs() {
         <View style={styles.headerDivider} />
 
         {/* ── filter fields ── */}
-        {/* ── filter fields ── */}
         <Text style={styles.filterSectionLabel}>FILTER BY</Text>
 
         {/* ✅ Bus — full width row */}
@@ -496,6 +535,49 @@ export default function EntryLogs() {
           </View>
         </View>
 
+        {/* ✅ Trip — full width row, same pattern as Bus */}
+        <View style={styles.filterField}>
+          <View style={styles.filterLabelRow}>
+            <Text style={styles.filterLabelIcon}>🧭</Text>
+            <Text style={styles.filterLabel}>TRIP</Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: T.inputBg,
+              borderRadius: 10,
+              borderWidth: 1.5,
+              borderColor: T.borderLight,
+              height: 45,
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            <Picker
+              selectedValue={selectedTrip}
+              onValueChange={(val) => setSelectedTrip(val)}
+              mode="dropdown"
+              style={{
+                width: "100%",
+                height: 49,
+                color: selectedTrip === "" ? T.textMuted : T.textPrimary,
+                backgroundColor: "transparent",
+                marginTop: Platform.OS === "android" ? -4 : 0,
+              }}
+              dropdownIconColor={T.textMuted}
+            >
+              <Picker.Item label="All Trips" value="" color={T.textMuted} />
+              {tripList.map((trip) => (
+                <Picker.Item
+                  key={trip.trip_id}
+                  label={fmtTripLabel(trip)}
+                  value={trip.trip_id}
+                  color={T.textPrimary}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
         {/* ✅ FROM and TO — side by side below */}
         <View style={styles.filterRow}>
           <DateTimeField label="FROM" value={fromDate} onChange={setFromDate} />
@@ -515,41 +597,6 @@ export default function EntryLogs() {
       {/* ══════════════════════════════════════════
           STAT CARDS
       ══════════════════════════════════════════ */}
-      {/* <View style={styles.statsWrap}>
-        <StatCard
-          borderColor={T.greenMid}
-          iconBg={T.greenLight}
-          iconColor={T.green}
-          icon="↑"
-          label="TOTAL ENTRY"
-          value={totalEntry}
-          badgeBg={T.greenLight}
-          badgeTextColor={T.green}
-          badgeLabel="Boarded"
-        />
-        <StatCard
-          borderColor={T.amberMid}
-          iconBg={T.amberLight}
-          iconColor={T.amber}
-          icon="↓"
-          label="TOTAL EXIT"
-          value={totalExit}
-          badgeBg={T.amberLight}
-          badgeTextColor={T.amber}
-          badgeLabel="Alighted"
-        />
-        <StatCard
-          borderColor={T.brand}
-          iconBg={T.brandLight}
-          iconColor={T.brand}
-          icon="👥"
-          label="OCCUPANCY"
-          value={occupancy}
-          badgeBg={T.brandLight}
-          badgeTextColor={T.brand}
-          badgeLabel="On board"
-        />
-      </View> */}
       <View style={styles.summaryContainer}>
         {/* Total Entry */}
         <View style={[styles.summaryCard, { borderTopColor: "#22c55e" }]}>

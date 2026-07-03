@@ -27,17 +27,17 @@ export default function Box() {
   const [boxes, setBoxes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingBoxId, setEditingBoxId] = useState(null);
-  
+
   const [formLoading, setFormLoading] = useState(false);
-  
+
   const [scannerVisible, setScannerVisible] = useState(false);
   const [assigningBoxId, setAssigningBoxId] = useState(null);
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  
+
   const initialFormState = {
     box_type: 'PI_BOX',
     status: 'In Stock',
@@ -54,9 +54,12 @@ export default function Box() {
     setIsLoading(true);
     try {
       const data = await getBoxesAPI();
-      setBoxes(data);
+      // Guard against the API returning null/undefined, which would
+      // otherwise crash every .filter()/.map() call on `boxes` below.
+      setBoxes(Array.isArray(data) ? data : []);
     } catch (e) {
       Alert.alert('Error', 'Failed to fetch boxes.');
+      setBoxes([]);
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +95,7 @@ export default function Box() {
           } catch (e) {
             Alert.alert('Error', e.message || 'Failed to delete box');
           }
-        }
+        },
       },
     ]);
   };
@@ -119,18 +122,22 @@ export default function Box() {
       fetchBoxes();
     } catch (e) {
       let errorMessage = e.message || 'Failed to assign component';
-      
+
       const match = errorMessage.match(/Category '(.*?)' is not allowed in a (.*?)\. Allowed: (.*)/i);
       if (match) {
+        const category = match[1];
         const boxTypeParts = match[2].split('_');
-        const boxType = boxTypeParts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
-        
-        errorMessage = `Unable to assign the selected component to the ${boxType}." `;
+        const boxType = boxTypeParts
+          .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+          .join(' ');
+        const allowed = match[3];
+
+        errorMessage = `Unable to assign "${category}" to the ${boxType}. Allowed categories: ${allowed}.`;
         Alert.alert('Assignment Failed', errorMessage);
       } else {
         Alert.alert('Error', errorMessage);
       }
-      
+
       setScannerVisible(false);
     } finally {
       setDeviceLoading(false);
@@ -146,7 +153,7 @@ export default function Box() {
       Alert.alert('Validation Error', 'Box Type is required.');
       return;
     }
-    
+
     setFormLoading(true);
     try {
       const payload = {
@@ -171,8 +178,8 @@ export default function Box() {
     }
   };
 
-  const filteredBoxes = boxes.filter((box) => {
-    const searchString = `${box.box_type} ${box.notes} ${box.bus_no}`.toLowerCase();
+  const filteredBoxes = (boxes || []).filter((box) => {
+    const searchString = `${box.box_type || ''} ${box.notes || ''} ${box.bus_no || ''}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
 
@@ -203,23 +210,43 @@ export default function Box() {
               <View key={box.id} style={styles.card}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>{box.box_type}</Text>
-                  <View style={[styles.statusBadge, box.status === 'In Stock' ? styles.statusActive : styles.statusInactive]}>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      box.status === 'In Stock' ? styles.statusActive : styles.statusInactive,
+                    ]}
+                  >
                     <Text style={styles.statusText}>{box.status || 'Unknown'}</Text>
                   </View>
                 </View>
-                <Text style={styles.cardDesc}><Text style={styles.bold}>Assigned to Bus:</Text> {box.bus_no || 'Not Assigned'}</Text>
-                <Text style={styles.cardDesc}><Text style={styles.bold}>Notes:</Text> {box.notes}</Text>
-                <Text style={styles.cardDesc}><Text style={styles.bold}>Components:</Text> {box.components && box.components.length > 0 ? box.components.map(c => c.category).join(', ') : 'None'}</Text>
+                <Text style={styles.cardDesc}>
+                  <Text style={styles.bold}>Assigned to Bus:</Text> {box.bus_no || 'Not Assigned'}
+                </Text>
+                <Text style={styles.cardDesc}>
+                  <Text style={styles.bold}>Notes:</Text> {box.notes}
+                </Text>
+                <Text style={styles.cardDesc}>
+                  <Text style={styles.bold}>Components:</Text>{' '}
+                  {box.components && box.components.length > 0
+                    ? box.components.map((c) => c.category).join(', ')
+                    : 'None'}
+                </Text>
 
                 <View style={styles.actionRow}>
-                  <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#e6fffa' }]} onPress={() => openScannerModal(box.id)}>
+                  <TouchableOpacity
+                    style={[styles.iconButton, { backgroundColor: '#e6fffa' }]}
+                    onPress={() => openScannerModal(box.id)}
+                  >
                     <MaterialCommunityIcons name="qrcode-scan" size={18} color="#222a29ff" />
                   </TouchableOpacity>
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity style={styles.iconButton} onPress={() => openEditModal(box)}>
                       <Feather name="edit" size={18} color="#2b6cb0" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#fff5f5', marginRight: 0 }]} onPress={() => handleDelete(box.id)}>
+                    <TouchableOpacity
+                      style={[styles.iconButton, { backgroundColor: '#fff5f5', marginRight: 0 }]}
+                      onPress={() => handleDelete(box.id)}
+                    >
                       <Feather name="trash-2" size={18} color="#e53e3e" />
                     </TouchableOpacity>
                   </View>
@@ -241,7 +268,6 @@ export default function Box() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.formContainer}>
-            
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Box Type *</Text>
@@ -253,19 +279,30 @@ export default function Box() {
                   ]}
                   value={formData.box_type}
                   style={pickerSelectStyles}
-                  placeholder={{ label: "Select Box Type...", value: "" }}
+                  placeholder={{ label: 'Select Box Type...', value: '' }}
                   useNativeAndroidPickerStyle={false}
                 />
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Status</Text>
-                <TextInput style={styles.input} value={formData.status} onChangeText={(val) => handleInputChange('status', val)} placeholder="e.g. In Stock" />
+                <TextInput
+                  style={styles.input}
+                  value={formData.status}
+                  onChangeText={(val) => handleInputChange('status', val)}
+                  placeholder="e.g. In Stock"
+                />
               </View>
             </View>
 
             <View style={styles.inputFull}>
               <Text style={styles.label}>Notes</Text>
-              <TextInput style={[styles.input, { height: 80 }]} value={formData.notes} onChangeText={(val) => handleInputChange('notes', val)} placeholder="Additional notes..." multiline />
+              <TextInput
+                style={[styles.input, { height: 80 }]}
+                value={formData.notes}
+                onChangeText={(val) => handleInputChange('notes', val)}
+                placeholder="Additional notes..."
+                multiline
+              />
             </View>
 
             <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={formLoading}>
@@ -285,7 +322,7 @@ export default function Box() {
               <Feather name="x" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.cameraWrapper}>
             {scannerVisible && permission?.granted && (
               <CameraView
@@ -293,7 +330,7 @@ export default function Box() {
                 facing="back"
                 onBarcodeScanned={deviceLoading ? undefined : handleBarcodeScanned}
                 barcodeScannerSettings={{
-                  barcodeTypes: ["qr", "ean13", "ean8", "code128", "code39", "upc_e"],
+                  barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'upc_e'],
                 }}
               />
             )}
@@ -305,7 +342,7 @@ export default function Box() {
               </View>
             )}
           </View>
-          
+
           <View style={styles.scannerFooter}>
             <Text style={styles.scannerInstruction}>
               Point the camera at the Component's QR code to assign it to this Box.

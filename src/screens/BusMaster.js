@@ -121,6 +121,7 @@ export default function BusMaster() {
       },
     ]);
   };
+
   const handleUnassignBox = (boxId, busNo) => {
     Alert.alert(
       "Unassign Box",
@@ -145,6 +146,7 @@ export default function BusMaster() {
       ],
     );
   };
+
   const handleSaveBus = async () => {
     if (!formData.bus_no || !formData.route) {
       Alert.alert("Validation Error", "Bus Number and Route are required.");
@@ -157,9 +159,11 @@ export default function BusMaster() {
         await updateBusAPI(editingBusId, formData);
         Alert.alert("Success", "Bus successfully updated!");
       } else {
-        // Validate unique bus number
+        // Validate unique bus number (guard against buses missing bus_no)
         const existing = buses.find(
-          (b) => b.bus_no.toLowerCase() === formData.bus_no.toLowerCase(),
+          (b) =>
+            b.bus_no &&
+            b.bus_no.toLowerCase() === formData.bus_no.toLowerCase(),
         );
         if (existing) {
           Alert.alert("Error", "Bus number already exists!");
@@ -212,7 +216,7 @@ export default function BusMaster() {
     }
   };
 
-  // Filter and Search logic
+  // Filter and Search logic (guard against missing bus_no)
   const filteredBuses = buses.filter((bus) => {
     const matchesSearch =
       bus.bus_no &&
@@ -242,7 +246,6 @@ export default function BusMaster() {
       </View>
 
       <View style={styles.filterRow}>
-        {/* <Text style={styles.filterLabel}>Filter Status: </Text> */}
         {["ALL", "ACTIVE", "INACTIVE"].map((f) => (
           <TouchableOpacity
             key={f}
@@ -335,7 +338,7 @@ export default function BusMaster() {
                       <View style={styles.boxChip}>
                         <Feather name="cpu" size={11} color="#2b6cb0" />
                         <Text style={styles.boxChipText}>
-                          Pi: {bus.pi_box.box_id.slice(0, 8)}…
+                          Pi: {bus.pi_box?.box_id?.slice(0, 8) || "N/A"}…
                         </Text>
                       </View>
                     )}
@@ -344,7 +347,7 @@ export default function BusMaster() {
                       <View style={styles.boxChip}>
                         <Feather name="radio" size={11} color="#2b6cb0" />
                         <Text style={styles.boxChipText}>
-                          Sensor: {bus.sensor_box.box_id.slice(0, 8)}…
+                          Sensor: {bus.sensor_box?.box_id?.slice(0, 8) || "N/A"}…
                         </Text>
                       </View>
                     )}
@@ -376,25 +379,19 @@ export default function BusMaster() {
                           </Text>
                         </TouchableOpacity>
                       ) : (
-                        <>
-                          <TouchableOpacity
-                            style={[styles.actBtn, styles.btnUnassign]}
-                            onPress={() =>
-                              handleUnassignBox(bus.pi_box.box_id, bus.bus_no)
-                            }
+                        <TouchableOpacity
+                          style={[styles.actBtn, styles.btnUnassign]}
+                          onPress={() =>
+                            handleUnassignBox(bus.pi_box?.box_id, bus.bus_no)
+                          }
+                        >
+                          <Feather name="x-circle" size={13} color="#742a2a" />
+                          <Text
+                            style={[styles.actBtnText, { color: "#742a2a" }]}
                           >
-                            <Feather
-                              name="x-circle"
-                              size={13}
-                              color="#742a2a"
-                            />
-                            <Text
-                              style={[styles.actBtnText, { color: "#742a2a" }]}
-                            >
-                              Remove Box
-                            </Text>
-                          </TouchableOpacity>
-                        </>
+                            Remove Box
+                          </Text>
+                        </TouchableOpacity>
                       )}
                     </View>
 
@@ -417,29 +414,22 @@ export default function BusMaster() {
                           </Text>
                         </TouchableOpacity>
                       ) : (
-                        <>
-                      
-                          <TouchableOpacity
-                            style={[styles.actBtn, styles.btnUnassign]}
-                            onPress={() =>
-                              handleUnassignBox(
-                                bus.sensor_box.box_id,
-                                bus.bus_no,
-                              )
-                            }
+                        <TouchableOpacity
+                          style={[styles.actBtn, styles.btnUnassign]}
+                          onPress={() =>
+                            handleUnassignBox(
+                              bus.sensor_box?.box_id,
+                              bus.bus_no,
+                            )
+                          }
+                        >
+                          <Feather name="x-circle" size={13} color="#742a2a" />
+                          <Text
+                            style={[styles.actBtnText, { color: "#742a2a" }]}
                           >
-                            <Feather
-                              name="x-circle"
-                              size={13}
-                              color="#742a2a"
-                            />
-                            <Text
-                              style={[styles.actBtnText, { color: "#742a2a" }]}
-                            >
-                              Remove Box
-                            </Text>
-                          </TouchableOpacity>
-                        </>
+                            Remove Box
+                          </Text>
+                        </TouchableOpacity>
                       )}
                     </View>
                   </View>
@@ -760,44 +750,6 @@ const styles = StyleSheet.create({
     color: "#a0aec0",
     marginTop: 40,
     fontSize: 16,
-  },
-  busCard: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  busCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  busCardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#2d3748",
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusActive: {
-    backgroundColor: "#c6f6d5",
-  },
-  statusInactive: {
-    backgroundColor: "#fed7d7",
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#1a202c",
   },
   // Card container
   busCard: {

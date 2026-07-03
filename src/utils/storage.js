@@ -51,31 +51,45 @@ export const saveHistory = async (history) => {
 
 export const BASE_URL = 'http://143.244.140.108:8080';
 
+// Shared helper: extract a useful error message from a failed response,
+// tolerating either { detail } or { message } error shapes and bodies
+// that aren't valid JSON at all.
+const extractErrorMessage = async (response, fallback) => {
+  try {
+    const errJson = await response.json();
+    return errJson.detail || errJson.message || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const getBusesAPI = async () => {
   try {
     const response = await fetch(`${BASE_URL}/bus-box-details`);
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to fetch buses'));
+    }
     const json = await response.json();
     return json.data || [];
   } catch (error) {
     console.error('getBusesAPI error:', error);
-     throw error;
+    throw error;
   }
 };
 
 export const createBusAPI = async (busData) => {
   const payload = {
     ...busData,
-    is_active: !!busData.is_active
+    is_active: !!busData.is_active,
   };
   try {
     const response = await fetch(`${BASE_URL}/bus-master`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to create bus');
+      throw new Error(await extractErrorMessage(response, 'Failed to create bus'));
     }
     return await response.json();
   } catch (error) {
@@ -87,17 +101,16 @@ export const createBusAPI = async (busData) => {
 export const updateBusAPI = async (id, updatedData) => {
   const payload = {
     ...updatedData,
-    is_active: !!updatedData.is_active
+    is_active: !!updatedData.is_active,
   };
   try {
     const response = await fetch(`${BASE_URL}/bus-master/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to update bus');
+      throw new Error(await extractErrorMessage(response, 'Failed to update bus'));
     }
     return await response.json();
   } catch (error) {
@@ -113,8 +126,7 @@ export const deleteBusAPI = async (id) => {
       method: 'DELETE',
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to delete bus');
+      throw new Error(await extractErrorMessage(response, 'Failed to delete bus'));
     }
     return true;
   } catch (error) {
@@ -125,19 +137,38 @@ export const deleteBusAPI = async (id) => {
 
 export const assignBoxToBusAPI = async (boxId, busNo) => {
   try {
+    if (!boxId || typeof boxId !== 'string') {
+      throw new Error('Invalid box ID scanned');
+    }
     const encodedBoxId = encodeURIComponent(boxId.trim());
     const response = await fetch(`${BASE_URL}/box/${encodedBoxId}/assign`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bus_no: busNo })
+      body: JSON.stringify({ bus_no: busNo }),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to assign box to bus');
+      throw new Error(await extractErrorMessage(response, 'Failed to assign box to bus'));
     }
     return await response.json();
   } catch (error) {
     console.error('assignBoxToBusAPI error:', error);
+    throw error;
+  }
+};
+
+export const unassignBoxFromBusAPI = async (boxId) => {
+  try {
+    const encodedBoxId = encodeURIComponent(boxId);
+    const response = await fetch(`${BASE_URL}/box/${encodedBoxId}/unassign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to unassign box'));
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('unassignBoxFromBusAPI error:', error);
     throw error;
   }
 };
@@ -147,6 +178,9 @@ export const assignBoxToBusAPI = async (boxId, busNo) => {
 export const getComponentsAPI = async () => {
   try {
     const response = await fetch(`${BASE_URL}/component`);
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to fetch components'));
+    }
     const json = await response.json();
     return json.data || [];
   } catch (error) {
@@ -160,11 +194,10 @@ export const createComponentAPI = async (componentData) => {
     const response = await fetch(`${BASE_URL}/component`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(componentData)
+      body: JSON.stringify(componentData),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to create component');
+      throw new Error(await extractErrorMessage(response, 'Failed to create component'));
     }
     return await response.json();
   } catch (error) {
@@ -178,26 +211,16 @@ export const updateComponentAPI = async (id, componentData) => {
     const response = await fetch(`${BASE_URL}/component/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(componentData)
+      body: JSON.stringify(componentData),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to update component');
+      throw new Error(await extractErrorMessage(response, 'Failed to update component'));
     }
     return await response.json();
   } catch (error) {
     console.error('updateComponentAPI error:', error);
     throw error;
   }
-};
-export const unassignBoxFromBusAPI = async (boxId) => {
-  const response = await fetch(`${BASE_URL}/box/${boxId}/unassign`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Failed to unassign box');
-  return data;
 };
 
 export const deleteComponentAPI = async (id) => {
@@ -207,8 +230,7 @@ export const deleteComponentAPI = async (id) => {
       method: 'DELETE',
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to delete component');
+      throw new Error(await extractErrorMessage(response, 'Failed to delete component'));
     }
     return true;
   } catch (error) {
@@ -222,6 +244,9 @@ export const deleteComponentAPI = async (id) => {
 export const getBoxesAPI = async () => {
   try {
     const response = await fetch(`${BASE_URL}/box`);
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to fetch boxes'));
+    }
     const json = await response.json();
     return json.data || [];
   } catch (error) {
@@ -235,11 +260,10 @@ export const createBoxAPI = async (boxData) => {
     const response = await fetch(`${BASE_URL}/box`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(boxData)
+      body: JSON.stringify(boxData),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to create box');
+      throw new Error(await extractErrorMessage(response, 'Failed to create box'));
     }
     return await response.json();
   } catch (error) {
@@ -253,11 +277,10 @@ export const updateBoxAPI = async (id, boxData) => {
     const response = await fetch(`${BASE_URL}/box/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(boxData)
+      body: JSON.stringify(boxData),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to update box');
+      throw new Error(await extractErrorMessage(response, 'Failed to update box'));
     }
     return await response.json();
   } catch (error) {
@@ -273,8 +296,7 @@ export const deleteBoxAPI = async (id) => {
       method: 'DELETE',
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to delete box');
+      throw new Error(await extractErrorMessage(response, 'Failed to delete box'));
     }
     return true;
   } catch (error) {
@@ -288,11 +310,10 @@ export const assignComponentToBoxAPI = async (boxId, componentId) => {
     const response = await fetch(`${BASE_URL}/box/${boxId}/assign-component`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ component_id: componentId })
+      body: JSON.stringify({ component_id: componentId }),
     });
     if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.detail || 'Failed to assign component');
+      throw new Error(await extractErrorMessage(response, 'Failed to assign component'));
     }
     return await response.json();
   } catch (error) {
