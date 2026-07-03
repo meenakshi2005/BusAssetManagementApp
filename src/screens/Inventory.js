@@ -40,18 +40,18 @@ export default function Inventory() {
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   
-  const initialFormState = {
-    category: '',
-    vendor: 'Teltonika',
-    purchase_date: '',
-    warranty_months: '',
-    invoice_number: 'INV-2026-001',
-    status: '',
-    notes: 'Installed near the driver dashboard.',
-    device_id: '', // only used in Edit mode
-    position: '',
-    comp_id: 'COMP-GPS-001',
-  };
+ const initialFormState = {
+  category: 'GPS Tracker',
+  vendor: 'Teltonika',
+  purchase_date: '2026-07-01',
+  warranty_months: '24',
+  invoice_number: 'INV-2026-001',
+  status: 'Active',
+  notes: 'Installed near the driver dashboard.',
+  device_id: 'TEL-FMB920-001',
+  position: 'Driver Dashboard',
+  comp_id: 'COMP-GPS-001',
+};
 
   const [formData, setFormData] = useState(initialFormState);
   const [showDatePicker, setShowDatePicker] = useState(false);

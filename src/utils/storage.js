@@ -190,6 +190,15 @@ export const updateComponentAPI = async (id, componentData) => {
     throw error;
   }
 };
+export const unassignBoxFromBusAPI = async (boxId) => {
+  const response = await fetch(`${BASE_URL}/box/${boxId}/unassign`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to unassign box');
+  return data;
+};
 
 export const deleteComponentAPI = async (id) => {
   try {

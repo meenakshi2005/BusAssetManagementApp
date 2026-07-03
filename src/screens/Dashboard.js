@@ -14,9 +14,12 @@ export default function Dashboard({ navigation }) {
           <Text style={styles.cardTitle}>🚌 Bus Master</Text>
           <Text style={styles.cardDesc}>Manage buses and generate Master QRs</Text>
         </TouchableOpacity>
-
+ <TouchableOpacity style={[styles.card, { borderLeftColor: '#263b80', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Trip')}>
+          <Text style={styles.tripTitle}>🚌 Trip</Text>
+          <Text style={styles.cardDesc}>Manage Trip</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={[styles.card, { borderLeftColor: '#38a169', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Inventory')}>
-          <Text style={styles.cardTitle}>📦 Inventory</Text>
+          <Text style={styles.invTitle}>📦 Inventory</Text>
           <Text style={styles.cardDesc}>Track parts and hardware availability</Text>
         </TouchableOpacity>
 
@@ -26,7 +29,7 @@ export default function Dashboard({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.card, { borderLeftColor: '#d69e2e', borderLeftWidth: 4 }]} onPress={() => Alert.alert('Coming Soon', 'History module is under development.')}>
-          <Text style={styles.cardTitle}>📜 History</Text>
+          <Text style={styles.hisTitle}>📜 History</Text>
           <Text style={styles.cardDesc}>View past actions and maintenance records</Text>
         </TouchableOpacity>
       </View>
@@ -116,6 +119,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#3182ce',
+    marginBottom: 4,
+  },
+   hisTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#d69e2e',
+    marginBottom: 4,
+  },
+   invTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#38a169',
+    marginBottom: 4,
+  },
+   tripTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#263b80',
     marginBottom: 4,
   },
   cardDesc: {

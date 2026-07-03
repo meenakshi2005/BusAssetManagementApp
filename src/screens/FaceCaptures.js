@@ -184,10 +184,15 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
         const res = await fetch(url);
         if (res.ok) {
           const json = await res.json();
-          setData(json.data || []);
+          const records = json.data || [];
+          // Log to help debug direction/reason values
+          if (records.length > 0) {
+            console.log('[PAX]', paxId, 'sample:', JSON.stringify(records[0]));
+          }
+          setData(records);
         }
       } catch (err) {
-        console.error(err);
+        console.error('[FaceCaptures] fetch error:', err);
       } finally {
         setLoading(false);
       }
@@ -210,7 +215,10 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
   let inCount = 0;
   let outCount = 0;
   data.forEach((d) => {
-    if (d.reason && d.reason.toLowerCase().includes('exit')) {
+    // API uses uppercase ENTRY / EXIT (confirmed from EntryLogs.js)
+    const dir = String(d.direction || '').toUpperCase().trim();
+    const reason = String(d.reason || '').toLowerCase().trim();
+    if (dir === 'EXIT' || reason === 'exit' || reason.startsWith('exit_')) {
       outCount++;
     } else {
       inCount++;
@@ -220,20 +228,24 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
   const firstRecord = data.length > 0 ? data[0] : null;
   const imagePath =
     firstRecord && firstRecord.processed_path
-      ? `http://143.244.140.108:8080/${firstRecord.processed_path.replace(/^\/+/, '')}`
+      ? encodeURI(`http://143.244.140.108:8080/${firstRecord.processed_path.replace(/^\/+/, '')}`)
       : null;
 
-  let timeStr = 'N/A';
-  if (firstRecord && firstRecord.processed_at) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const formatTime = (raw) => {
     try {
-      const d = new Date(firstRecord.processed_at);
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const d = new Date(raw);
       let hours = d.getHours();
       const ampm = hours >= 12 ? 'pm' : 'am';
       hours = hours % 12 || 12;
-      timeStr = `${pad(d.getDate())} ${months[d.getMonth()]}, ${pad(hours)}:${pad(d.getMinutes())} ${ampm}`;
-    } catch (e) {}
-  }
+      return `${pad(d.getDate())} ${months[d.getMonth()]}, ${pad(hours)}:${pad(d.getMinutes())} ${ampm}`;
+    } catch (e) { return null; }
+  };
+
+  const timeStr = data
+    .map((d) => formatTime(d.processed_at))
+    .filter(Boolean)
+    .join(' · ') || 'N/A';
 
   return (
     <TouchableOpacity
@@ -241,7 +253,11 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
       onPress={() => onPress(data, paxId)}
     >
       {imagePath ? (
-        <Image source={{ uri: imagePath }} style={styles.paxImage} />
+        <Image
+          source={{ uri: imagePath }}
+          style={styles.paxImage}
+          onError={() => {}}
+        />
       ) : (
         <View style={styles.paxImagePlaceholder} />
       )}
@@ -341,11 +357,11 @@ export default function FaceCaptures() {
     <View>
       <View style={styles.headerPanel}>
         {/* Eyebrow */}
-        <View style={styles.eyebrowRow}>
+        {/* <View style={styles.eyebrowRow}>
           <View style={styles.eyebrowPill}>
             <Text style={styles.eyebrowText}>AI VISION</Text>
           </View>
-        </View>
+        </View> */}
 
         <Text style={styles.headerTitle}>Face Captures</Text>
         <Text style={styles.headerSub}>
@@ -356,36 +372,57 @@ export default function FaceCaptures() {
         <Text style={styles.filterSectionLabel}>FILTER BY</Text>
 
         {/* Bus picker — FIX: no style prop on Picker.Item */}
-        <View style={styles.filterField}>
-          <View style={styles.filterLabelRow}>
-            <Text style={styles.filterLabelIcon}>🚌</Text>
-            <Text style={styles.filterLabel}>BUS</Text>
-          </View>
-          <View
-            style={[
-              styles.filterInput,
-              { paddingVertical: 0, paddingHorizontal: 0, overflow: 'hidden' },
-            ]}
-          >
-            <Picker
-              selectedValue={selectedBus}
-              onValueChange={(val) => setSelectedBus(val)}
-              mode="dropdown"
-              style={{
-                flex: 1,
-                height: 42,
-                color: T.textPrimary,
-                backgroundColor: 'transparent',
-              }}
-              dropdownIconColor={T.textMuted}
-            >
-              <Picker.Item label="Select Bus" value="" />
-              {buses.map((id) => (
-                <Picker.Item key={id} label={id} value={id} />
-              ))}
-            </Picker>
-          </View>
-        </View>
+        {/* Bus picker */}
+<View style={styles.filterField}>
+  <View style={styles.filterLabelRow}>
+    <Text style={styles.filterLabelIcon}>🚌</Text>
+    <Text style={styles.filterLabel}>BUS</Text>
+  </View>
+
+  {/* ✅ FIX: Wrap Picker in a controlled-height container */}
+  <View
+    style={{
+      borderWidth: 1,
+      borderColor: '#D1D5DB',       // visible border
+      borderRadius: 10,
+      height: 45,                   // fixed height — no more clipping
+      justifyContent: 'center',
+      backgroundColor: '#FFFFFF',
+      overflow: 'hidden',
+    }}
+  >
+    <Picker
+      selectedValue={selectedBus}
+      onValueChange={(val) => setSelectedBus(val)}
+      mode="dropdown"
+      style={{
+        width: '100%',
+        height: 50,
+        // ✅ Muted gray when placeholder, dark when selected
+        color: selectedBus === '' ? '#9CA3AF' : '#111827',
+        backgroundColor: 'transparent',
+        marginTop: Platform.OS === 'android' ? -6 : 0, // Android offset fix
+      }}
+      dropdownIconColor="#6B7280"
+    >
+      {/* ✅ disabled placeholder — can't be re-selected */}
+      <Picker.Item
+        label="Select Bus"
+        value=""
+        enabled={false}
+        color="#9CA3AF"
+      />
+      {buses.map((id) => (
+        <Picker.Item
+          key={id}
+          label={id}
+          value={id}
+          color="#111827"
+        />
+      ))}
+    </Picker>
+  </View>
+</View>
 
         {/* Date range */}
         <View style={styles.filterRow}>
@@ -413,7 +450,7 @@ export default function FaceCaptures() {
       {/* Summary cards */}
       {summary && (
         <>
-          <View style={styles.summaryContainer}>
+          {/* <View style={styles.summaryContainer}>
             <View style={[styles.summaryCard, { borderTopColor: '#3b82f6' }]}>
               <Text style={[styles.summaryValue, { color: '#3b82f6' }]}>
                 {summary.total_processed_images}
@@ -437,7 +474,7 @@ export default function FaceCaptures() {
               </Text>
               <Text style={styles.summaryTitle}>Trips</Text>
             </View>
-          </View>
+          </View> */}
 
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleWrap}>
@@ -505,25 +542,6 @@ export default function FaceCaptures() {
       <Modal visible={modalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {/* Header image */}
-            <View style={styles.modalHeaderWrapper}>
-              {(() => {
-                const first = paxDetails && paxDetails.length > 0 ? paxDetails[0] : null;
-                const imgPath =
-                  first && first.processed_path
-                    ? `http://143.244.140.108:8080/${first.processed_path.replace(/^\/+/, '')}`
-                    : null;
-                return imgPath ? (
-                  <Image
-                    source={{ uri: imgPath }}
-                    style={styles.modalHeaderImage}
-                  />
-                ) : (
-                  <View style={styles.modalHeaderImagePlaceholder} />
-                );
-              })()}
-            </View>
-
             {/* Title row */}
             <View style={styles.modalHeaderInfoRow}>
               <Text style={styles.modalHeaderPaxText}>
@@ -548,30 +566,48 @@ export default function FaceCaptures() {
             ) : (
               <FlatList
                 data={paxDetails}
-                keyExtractor={(item, i) => `${item.processed_at}-${i}`}
-                renderItem={({ item }) => (
-                  <View style={styles.detailCard}>
-                    <Text style={styles.detailReason}>
-                      {item.reason || 'Captured'}
-                    </Text>
-                    <Text style={styles.detailTime}>
-                      Trip: {item.trip_id || 'N/A'}
-                    </Text>
-                    <Text style={styles.detailTime}>
-                      Processed:{' '}
-                      {item.processed_at
-                        ?.split('.')[0]
-                        ?.replace('T', ' ') || 'N/A'}
-                    </Text>
-                    <Text
-                      style={styles.detailPath}
-                      numberOfLines={1}
-                      ellipsizeMode="middle"
-                    >
-                      File: {item.processed_path}
-                    </Text>
-                  </View>
-                )}
+                keyExtractor={(item, i) => `detail-${i}-${item.processed_at || i}`}
+                nestedScrollEnabled
+                renderItem={({ item }) => {
+                  const rawPath = item.processed_path || '';
+                  const imgUrl = rawPath
+                    ? encodeURI(`http://143.244.140.108:8080/${rawPath.replace(/^\/+/, '')}`)
+                    : null;
+                  return (
+                    <View style={styles.detailCard}>
+                      {imgUrl ? (
+                        <Image
+                          source={{ uri: imgUrl }}
+                          style={styles.detailImage}
+                          resizeMode="cover"
+                          onError={() => {}}
+                        />
+                      ) : null}
+                      {/* <Text style={styles.detailReason}>
+                        {String(item.reason || 'Captured')}
+                      </Text> */}
+                      {/* <Text style={styles.detailTime}>
+                        Direction: {String(item.direction || 'N/A')}
+                      </Text>
+                      <Text style={styles.detailTime}>
+                        Trip: {String(item.trip_id || 'N/A')}
+                      </Text> */}
+                      <Text style={styles.detailTime}>
+                        Processed:{' '}
+                        {(item.processed_at || '')
+                          .split('.')[0]
+                          .replace('T', ' ') || 'N/A'}
+                      </Text>
+                      {/* <Text
+                        style={styles.detailPath}
+                        numberOfLines={1}
+                        ellipsizeMode="middle"
+                      >
+                        File: {String(rawPath || 'N/A')}
+                      </Text> */}
+                    </View>
+                  );
+                }}
                 contentContainerStyle={{ padding: 16 }}
               />
             )}
@@ -619,25 +655,25 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '800',
     color: T.textPrimary,
-    marginBottom: 6,
+    marginBottom: 2,
   },
   headerSub: {
     fontSize: 12,
     color: T.textMuted,
     fontWeight: '500',
-    marginBottom: 18,
+    marginBottom: 10,
   },
   headerDivider: {
     height: 1,
     backgroundColor: T.borderLight,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   filterSectionLabel: {
     fontSize: 10,
     fontWeight: '800',
     color: T.textMuted,
     letterSpacing: 1.2,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   filterRow: {
     flexDirection: 'row',
@@ -718,7 +754,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 12,
+    paddingBottom: 16,
+    paddingTop:16,
   },
   sectionTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionAccentBar: {
@@ -770,7 +807,7 @@ const styles = StyleSheet.create({
     color: T.textSecondary,
     marginBottom: 2,
   },
-  paxDateText: { fontSize: 12, color: T.textMuted },
+  paxDateText: { fontSize: 11, color: T.textMuted, flexShrink: 1, flexWrap: 'wrap' },
   paxBadgesContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -835,14 +872,18 @@ const styles = StyleSheet.create({
     elevation: 10,
     maxHeight: '80%',
   },
-  modalHeaderWrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: T.borderLight,
+  detailImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: T.surfaceMuted,
   },
-  modalHeaderImage: { width: 100, height: 100, borderTopLeftRadius: 12 },
-  modalHeaderImagePlaceholder: {
-    width: 100,
-    height: 100,
+  detailImagePlaceholder: {
+    width: '100%',
+    height: 180,
+    borderRadius: 8,
+    marginBottom: 10,
     backgroundColor: T.surfaceMuted,
   },
   modalHeaderInfoRow: {

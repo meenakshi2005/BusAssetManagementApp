@@ -12,6 +12,7 @@ import Inventory from './src/screens/Inventory';
 import Box from './src/screens/Box';
 import EntryLogs from './src/screens/EntryLogs';
 import FaceCaptures from './src/screens/FaceCaptures';
+import Trip from './src/screens/Trip';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,7 @@ export default function App() {
         <Stack.Screen name="Box" component={Box} />
         <Stack.Screen name="Entry Logs" component={EntryLogs} />
         <Stack.Screen name="Face Captures" component={FaceCaptures} />
+        <Stack.Screen name="Trip" component={Trip} options={{ title: 'Trips' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
