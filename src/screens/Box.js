@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import RNPickerSelect from 'react-native-picker-select';
+import { Picker } from '@react-native-picker/picker';
 import {
   getBoxesAPI,
   createBoxAPI,
@@ -271,17 +271,19 @@ export default function Box() {
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Box Type *</Text>
-                <RNPickerSelect
-                  onValueChange={(val) => handleInputChange('box_type', val)}
-                  items={[
-                    { label: 'PI_BOX', value: 'PI_BOX' },
-                    { label: 'SENSOR_BOX', value: 'SENSOR_BOX' },
-                  ]}
-                  value={formData.box_type}
-                  style={pickerSelectStyles}
-                  placeholder={{ label: 'Select Box Type...', value: '' }}
-                  useNativeAndroidPickerStyle={false}
-                />
+                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: 16 }}>
+                  <Picker
+                    selectedValue={formData.box_type}
+                    onValueChange={(val) => handleInputChange('box_type', val)}
+                    mode="dropdown"
+                    style={{ height: 50, color: formData.box_type ? '#2d3748' : '#a0aec0' }}
+                  >
+                    <Picker.Item label="Select Box Type..." value="" color="#a0aec0" />
+                    <Picker.Item label="PI_BOX" value="PI_BOX" color="#2d3748" />
+                    <Picker.Item label="SENSOR_BOX" value="SENSOR_BOX" color="#2d3748" />
+                  </Picker>
+                </View>
+
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Status</Text>

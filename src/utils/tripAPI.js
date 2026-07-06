@@ -108,3 +108,31 @@ export const deleteTripAPI = async (tripId) => {
     throw error;
   }
 };
+
+/**
+ * GET /gps/tracking
+ * Fetches GPS tracking logs.
+ * @param {number} limit 
+ * @param {number} offset 
+ * @param {string} deviceId 
+ * @param {string} busId 
+ */
+export const getGPSTrackingLogsAPI = async (limit = 100, offset = 0, deviceId = '', busId = '') => {
+  try {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+      device_id: deviceId,
+      bus_id: busId,
+    });
+    const response = await fetch(`${BASE_URL}/gps/tracking?${params.toString()}`);
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      throw new Error(parseErrorDetail(errJson.detail) || 'Failed to fetch GPS tracking logs');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('getGPSTrackingLogsAPI error:', error);
+    throw error;
+  }
+};

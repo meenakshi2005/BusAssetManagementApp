@@ -214,6 +214,8 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
 
   let inCount = 0;
   let outCount = 0;
+  let gender = null;
+  let age = null;
   data.forEach((d) => {
     // API uses uppercase ENTRY / EXIT (confirmed from EntryLogs.js)
     const dir = String(d.direction || '').toUpperCase().trim();
@@ -223,6 +225,8 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
     } else {
       inCount++;
     }
+    if (!gender && d.gender) gender = d.gender;
+    if (!age && d.age) age = d.age;
   });
 
   const firstRecord = data.length > 0 ? data[0] : null;
@@ -264,6 +268,11 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
       <View style={styles.paxInfo}>
         <Text style={styles.paxIdText}>{paxId}</Text>
         <Text style={styles.paxSubText}>{busId}</Text>
+        {(gender || age) ? (
+          <Text style={styles.paxSubText}>
+            {gender ? `Gender: ${gender}   ` : ''}{age ? `Age: ${age}` : ''}
+          </Text>
+        ) : null}
         <Text style={styles.paxDateText}>{timeStr}</Text>
       </View>
       <View style={styles.paxBadgesContainer}>
@@ -338,7 +347,7 @@ export default function FaceCaptures() {
 
       const data = await response.json();
       setSummary(data);
-      setPassengers(data.passengers || []);
+      setPassengers([...(data.passengers || [])].reverse());
     } catch (err) {
       setError(err.message || 'Failed to load face captures summary.');
     } finally {

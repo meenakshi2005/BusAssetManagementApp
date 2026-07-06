@@ -14,7 +14,7 @@ export default function Dashboard({ navigation }) {
           <Text style={styles.cardTitle}>🚌 Bus Master</Text>
           <Text style={styles.cardDesc}>Manage buses and generate Master QRs</Text>
         </TouchableOpacity>
- <TouchableOpacity style={[styles.card, { borderLeftColor: '#263b80', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Trip')}>
+        <TouchableOpacity style={[styles.card, { borderLeftColor: '#263b80', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Trip')}>
           <Text style={styles.tripTitle}>🚌 Trip</Text>
           <Text style={styles.cardDesc}>Manage Trip</Text>
         </TouchableOpacity>
@@ -22,12 +22,26 @@ export default function Dashboard({ navigation }) {
           <Text style={styles.invTitle}>📦 Inventory</Text>
           <Text style={styles.cardDesc}>Track parts and hardware availability</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={[styles.card, { borderLeftColor: '#805ad5', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Box')}>
           <Text style={[styles.cardTitle, { color: '#805ad5' }]}>📦 Box Management</Text>
           <Text style={styles.cardDesc}>Create and assign IoT Boxes to Buses</Text>
         </TouchableOpacity>
-
+        {/* <TouchableOpacity style={[styles.card, { borderLeftColor: '#e53e3e', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Add Hardware')}>
+          <Text style={[styles.cardTitle, { color: '#e53e3e' }]}>➕ Add Hardware</Text>
+          <Text style={styles.cardDesc}>Add new hardware parts</Text>
+        </TouchableOpacity> */}
+        {/* <TouchableOpacity style={[styles.card, { borderLeftColor: '#dd6b20', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Assign Components')}>
+          <Text style={[styles.cardTitle, { color: '#dd6b20' }]}>🔗 Assign Components</Text>
+          <Text style={styles.cardDesc}>Assign components to hardware</Text>
+        </TouchableOpacity> */}
+        {/* <TouchableOpacity style={[styles.card, { borderLeftColor: '#319795', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Replace Part')}>
+          <Text style={[styles.cardTitle, { color: '#319795' }]}>🔄 Replace Part</Text>
+          <Text style={styles.cardDesc}>Replace hardware parts</Text>
+        </TouchableOpacity> */}
+        {/* <TouchableOpacity style={[styles.card, { borderLeftColor: '#718096', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Deactivate Part')}>
+          <Text style={[styles.cardTitle, { color: '#718096' }]}>❌ Deactivate Part</Text>
+          <Text style={styles.cardDesc}>Deactivate hardware parts</Text>
+        </TouchableOpacity> */}
         <TouchableOpacity style={[styles.card, { borderLeftColor: '#d69e2e', borderLeftWidth: 4 }]} onPress={() => Alert.alert('Coming Soon', 'History module is under development.')}>
           <Text style={styles.hisTitle}>📜 History</Text>
           <Text style={styles.cardDesc}>View past actions and maintenance records</Text>
@@ -52,6 +66,13 @@ export default function Dashboard({ navigation }) {
         >
           <Text style={[styles.cardTitle, { color: '#805ad5' }]}>🧑 Face Captures</Text>
           <Text style={styles.cardDesc}>View face capture counter records</Text>
+        </TouchableOpacity>
+         <TouchableOpacity 
+          style={[styles.card, { borderLeftColor: '#805ad5', borderLeftWidth: 4 }]}
+          onPress={() => navigation.navigate('GPS Tracking')}
+        >
+          <Text style={[styles.cardTitle, { color: '#805ad5' }]}>📍 GPS Tracking</Text>
+          <Text style={styles.cardDesc}>View real-time GPS tracking logs</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

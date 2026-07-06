@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import RNPickerSelect from 'react-native-picker-select';
+import { Picker } from '@react-native-picker/picker';
 import uuid from 'react-native-uuid';
 import { saveComponents, getComponents } from '../utils/storage';
 
@@ -59,14 +59,18 @@ export default function AddHardware() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.label}>Category</Text>
-      <View style={styles.pickerContainer}>
-        <RNPickerSelect
+      <View style={[styles.pickerContainer, { overflow: 'hidden' }]}>
+        <Picker
+          selectedValue={category}
           onValueChange={(value) => setCategory(value)}
-          items={categories}
-          value={category}
-          placeholder={{ label: 'Select a category...', value: null }}
-          style={pickerSelectStyles}
-        />
+          mode="dropdown"
+          style={{ height: 50, color: category ? '#333' : '#a0aec0' }}
+        >
+          <Picker.Item label="Select a category..." value="" color="#a0aec0" />
+          {categories.map((cat, i) => (
+            <Picker.Item key={i} label={cat.label} value={cat.value} color="#333" />
+          ))}
+        </Picker>
       </View>
 
       <Text style={styles.label}>Hardware ID (or Serial Number)</Text>

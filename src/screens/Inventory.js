@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import RNPickerSelect from 'react-native-picker-select';
+import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   getComponentsAPI,
@@ -373,22 +373,23 @@ export default function Inventory() {
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Category *</Text>
-                <RNPickerSelect
-                  onValueChange={(val) => handleInputChange('category', val)}
-                  items={[
-                    { label: 'Camera', value: 'camera' },
-                    { label: 'GPS', value: 'gps' },
-                    { label: 'Battery', value: 'battery' },
-                    { label: 'Hotspot', value: 'hotspot' },
-                    { label: 'Pi', value: 'pi' },
-                    { label: 'ESP32', value: 'esp32' },
-                    { label: 'Tracker', value: 'Tracker' },
-                  ]}
-                  value={formData.category}
-                  style={pickerSelectStyles}
-                  placeholder={{ label: 'Select Category...', value: '' }}
-                  useNativeAndroidPickerStyle={false}
-                />
+                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: 16 }}>
+                  <Picker
+                    selectedValue={formData.category}
+                    onValueChange={(val) => handleInputChange('category', val)}
+                    mode="dropdown"
+                    style={{ height: 50, color: formData.category ? '#2d3748' : '#a0aec0' }}
+                  >
+                    <Picker.Item label="Select Category..." value="" color="#a0aec0" />
+                    <Picker.Item label="Camera" value="camera" color="#2d3748" />
+                    <Picker.Item label="GPS" value="gps" color="#2d3748" />
+                    <Picker.Item label="Battery" value="battery" color="#2d3748" />
+                    <Picker.Item label="Hotspot" value="hotspot" color="#2d3748" />
+                    <Picker.Item label="Pi" value="pi" color="#2d3748" />
+                    <Picker.Item label="ESP32" value="esp32" color="#2d3748" />
+                    <Picker.Item label="Tracker" value="Tracker" color="#2d3748" />
+                  </Picker>
+                </View>
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Vendor *</Text>
@@ -463,18 +464,19 @@ export default function Inventory() {
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Position</Text>
-                <RNPickerSelect
-                  onValueChange={(val) => handleInputChange('position', val)}
-                  items={[
-                    { label: 'Start', value: 'start' },
-                    { label: 'End', value: 'end' },
-                    { label: 'None', value: 'none' },
-                  ]}
-                  value={formData.position}
-                  style={pickerSelectStyles}
-                  placeholder={{ label: 'Select Position...', value: '' }}
-                  useNativeAndroidPickerStyle={false}
-                />
+                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: 16 }}>
+                  <Picker
+                    selectedValue={formData.position}
+                    onValueChange={(val) => handleInputChange('position', val)}
+                    mode="dropdown"
+                    style={{ height: 50, color: formData.position ? '#2d3748' : '#a0aec0' }}
+                  >
+                    <Picker.Item label="Select Position..." value="" color="#a0aec0" />
+                    <Picker.Item label="Start" value="start" color="#2d3748" />
+                    <Picker.Item label="End" value="end" color="#2d3748" />
+                    <Picker.Item label="None" value="none" color="#2d3748" />
+                  </Picker>
+                </View>
               </View>
             </View>
 

@@ -125,7 +125,7 @@ export default function BusMaster() {
   const handleUnassignBox = (boxId, busNo) => {
     Alert.alert(
       "Unassign Box",
-      `Are you sure you want to unassign box "${boxId}" from bus ${busNo}?`,
+      `Are you sure you want to unassign box`,
       [
         { text: "Cancel", style: "cancel" },
         {
