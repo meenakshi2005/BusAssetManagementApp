@@ -49,7 +49,7 @@ export const saveHistory = async (history) => {
 
 // --- Real API Flow for Bus Master ---
 
-export const BASE_URL = 'http://143.244.140.108:8080';
+export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://143.244.140.108:8080';
 
 // Shared helper: extract a useful error message from a failed response,
 // tolerating either { detail } or { message } error shapes and bodies
@@ -318,6 +318,87 @@ export const assignComponentToBoxAPI = async (boxId, componentId) => {
     return await response.json();
   } catch (error) {
     console.error('assignComponentToBoxAPI error:', error);
+    throw error;
+  }
+};
+
+// --- Camera Detail APIs ---
+
+export const getCamerasAPI = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/camera`);
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to fetch cameras'));
+    }
+    const json = await response.json();
+    return json.data || [];
+  } catch (error) {
+    console.error('getCamerasAPI error:', error);
+    throw error;
+  }
+};
+
+export const getCameraByIdAPI = async (cameraId) => {
+  try {
+    const encodedId = encodeURIComponent(cameraId);
+    const response = await fetch(`${BASE_URL}/camera/${encodedId}`);
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to fetch camera'));
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('getCameraByIdAPI error:', error);
+    throw error;
+  }
+};
+
+export const createCameraAPI = async (cameraData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/camera`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cameraData),
+    });
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to create camera'));
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('createCameraAPI error:', error);
+    throw error;
+  }
+};
+
+export const updateCameraAPI = async (cameraId, cameraData) => {
+  try {
+    const encodedId = encodeURIComponent(cameraId);
+    const response = await fetch(`${BASE_URL}/camera/${encodedId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cameraData),
+    });
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to update camera'));
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('updateCameraAPI error:', error);
+    throw error;
+  }
+};
+
+export const deleteCameraAPI = async (cameraId) => {
+  try {
+    const encodedId = encodeURIComponent(cameraId);
+    const response = await fetch(`${BASE_URL}/camera/${encodedId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to delete camera'));
+    }
+    return true;
+  } catch (error) {
+    console.error('deleteCameraAPI error:', error);
     throw error;
   }
 };

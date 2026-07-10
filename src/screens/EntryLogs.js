@@ -458,8 +458,8 @@ export default function EntryLogs() {
   };
 
   // ── computed stats ────────────────────────────────
-  const totalEntry = logs.filter((l) => l.direction === "ENTRY").length;
-  const totalExit = logs.filter((l) => l.direction === "EXIT").length;
+  const totalEntry = logs.filter((l) => l && l.direction === "ENTRY").length;
+  const totalExit = logs.filter((l) => l && l.direction === "EXIT").length;
   const occupancy = Math.max(0, totalEntry - totalExit);
 
   // ─────────────────────────────────────────────────
@@ -665,8 +665,8 @@ export default function EntryLogs() {
 
       <FlatList
         data={logs}
-        keyExtractor={(item, i) => `${item.bus_id}-${item.timestamp}-${i}`}
-        renderItem={({ item }) => <LogCard item={item} />}
+        keyExtractor={(item, i) => item ? `${item.bus_id}-${item.timestamp}-${i}` : i.toString()}
+        renderItem={({ item }) => item ? <LogCard item={item} /> : null}
         ListHeaderComponent={ListHeader}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}

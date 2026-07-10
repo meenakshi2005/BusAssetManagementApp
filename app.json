@@ -5,7 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "android": {
-      "package": "com.consultit.busassetmanagement"
+      "package": "com.consultit.busassetmanagement",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+        }
+      }
     },
     "extra": {
       "eas": {
@@ -14,7 +19,22 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Bus Asset Management to access your camera."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ]
   }
 }

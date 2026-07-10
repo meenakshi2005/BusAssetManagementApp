@@ -14,6 +14,10 @@ export default function Dashboard({ navigation }) {
           <Text style={styles.cardTitle}>🚌 Bus Master</Text>
           <Text style={styles.cardDesc}>Manage buses and generate Master QRs</Text>
         </TouchableOpacity>
+         <TouchableOpacity style={[styles.card, { borderLeftColor: '#e99124', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Camera Details')}>
+          <Text style={styles.cardsTitle}>📷 Camera Master</Text>
+          <Text style={styles.cardDesc}> Manage Camera</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={[styles.card, { borderLeftColor: '#263b80', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Trip')}>
           <Text style={styles.tripTitle}>🚌 Trip</Text>
           <Text style={styles.cardDesc}>Manage Trip</Text>
@@ -68,10 +72,10 @@ export default function Dashboard({ navigation }) {
           <Text style={styles.cardDesc}>View face capture counter records</Text>
         </TouchableOpacity>
          <TouchableOpacity 
-          style={[styles.card, { borderLeftColor: '#805ad5', borderLeftWidth: 4 }]}
+          style={[styles.card, { borderLeftColor: '#ec8909', borderLeftWidth: 4 }]}
           onPress={() => navigation.navigate('GPS Tracking')}
         >
-          <Text style={[styles.cardTitle, { color: '#805ad5' }]}>📍 GPS Tracking</Text>
+          <Text style={[styles.cardTitle, { color: '#ec8909' }]}>📍 GPS Tracking</Text>
           <Text style={styles.cardDesc}>View real-time GPS tracking logs</Text>
         </TouchableOpacity>
       </View>
@@ -140,6 +144,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#3182ce',
+    marginBottom: 4,
+  },
+    cardsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#e99124',
     marginBottom: 4,
   },
    hisTitle: {

@@ -57,13 +57,13 @@ const formatTimeStr = (date) => {
 
 const makeToday8am = () => {
   const d = new Date();
-  d.setHours(8, 0, 0, 0);
+ d.setHours(0, 0, 0, 0);
   return d;
 };
 
 const makeToday5pm = () => {
   const d = new Date();
-  d.setHours(17, 0, 0, 0);
+   d.setHours(23, 59, 59, 999);
   return d;
 };
 
