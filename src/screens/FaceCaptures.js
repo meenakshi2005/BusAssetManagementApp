@@ -175,7 +175,7 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
         const endStr    = formatTimeStr(toDate);
 
         const url =
-          `http://143.244.140.108:8080/processed/passenger/${paxId}` +
+          `https://exhibitnow.world/processed/passenger/${paxId}` +
           `?bus_id=${busId}` +
           `&date=${dateStr}` +
           `&start_time=${encodeURIComponent(startStr)}` +
@@ -232,7 +232,7 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
   const firstRecord = data.length > 0 ? data[0] : null;
   const imagePath =
     firstRecord && firstRecord.processed_path
-      ? encodeURI(`http://143.244.140.108:8080/${firstRecord.processed_path.replace(/^\/+/, '')}`)
+      ? encodeURI(`https://exhibitnow.world/${firstRecord.processed_path.replace(/^\/+/, '')}`)
       : null;
 
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -336,7 +336,7 @@ export default function FaceCaptures() {
       const endStr   = formatTimeStr(toDate);
 
       const url =
-        `http://143.244.140.108:8080/processed/summary` +
+        `https://exhibitnow.world/processed/summary` +
         `?bus_id=${selectedBus}` +
         `&date=${dateStr}` +
         `&start_time=${encodeURIComponent(startStr)}` +
@@ -580,7 +580,7 @@ export default function FaceCaptures() {
                 renderItem={({ item }) => {
                   const rawPath = item.processed_path || '';
                   const imgUrl = rawPath
-                    ? encodeURI(`http://143.244.140.108:8080/${rawPath.replace(/^\/+/, '')}`)
+                    ? encodeURI(`https://exhibitnow.world/${rawPath.replace(/^\/+/, '')}`)
                     : null;
                   return (
                     <View style={styles.detailCard}>

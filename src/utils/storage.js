@@ -49,7 +49,7 @@ export const saveHistory = async (history) => {
 
 // --- Real API Flow for Bus Master ---
 
-export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'http://143.244.140.108:8080';
+export const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || 'https://exhibitnow.world';
 
 // Shared helper: extract a useful error message from a failed response,
 // tolerating either { detail } or { message } error shapes and bodies
