@@ -21,6 +21,7 @@ import {
   updateBoxAPI,
   deleteBoxAPI,
   assignComponentToBoxAPI,
+  removeComponentFromBoxAPI,
 } from '../utils/storage';
 
 export default function Box() {
@@ -144,6 +145,29 @@ export default function Box() {
     }
   };
 
+  const handleRemoveComponent = (boxId, component) => {
+    Alert.alert(
+      'Remove Component',
+      `Remove "${component.category || component.id}" from this box?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeComponentFromBoxAPI(boxId, component.id);
+              Alert.alert('Success', 'Component removed from box.');
+              fetchBoxes();
+            } catch (e) {
+              Alert.alert('Error', e.message || 'Failed to remove component');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -225,12 +249,24 @@ export default function Box() {
                 <Text style={styles.cardDesc}>
                   <Text style={styles.bold}>Notes:</Text> {box.notes}
                 </Text>
-                <Text style={styles.cardDesc}>
-                  <Text style={styles.bold}>Components:</Text>{' '}
-                  {box.components && box.components.length > 0
-                    ? box.components.map((c) => c.category).join(', ')
-                    : 'None'}
-                </Text>
+                <Text style={styles.bold}>Components:</Text>
+                {box.components && box.components.length > 0 ? (
+                  <View style={styles.componentChipsRow}>
+                    {box.components.map((c) => (
+                      <View key={c.id} style={styles.componentChip}>
+                        <Text style={styles.componentChipText}>{c.category || c.id}</Text>
+                        <TouchableOpacity
+                          style={styles.componentChipRemove}
+                          onPress={() => handleRemoveComponent(box.id, c)}
+                        >
+                          <Feather name="x" size={12} color="#e53e3e" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.cardDesc}>None</Text>
+                )}
 
                 <View style={styles.actionRow}>
                   <TouchableOpacity
@@ -455,6 +491,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#edf2f7',
     paddingTop: 12,
+  },
+  componentChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  componentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0e6ff',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  componentChipText: {
+    fontSize: 12,
+    color: '#553c9a',
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  componentChipRemove: {
+    padding: 2,
   },
   iconButton: {
     paddingHorizontal: 12,

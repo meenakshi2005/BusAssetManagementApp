@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 export default function Dashboard({ navigation }) {
   const [activeTab, setActiveTab] = useState('Master');
@@ -14,22 +14,27 @@ export default function Dashboard({ navigation }) {
           <Text style={styles.cardTitle}>🚌 Bus Master</Text>
           <Text style={styles.cardDesc}>Manage buses and generate Master QRs</Text>
         </TouchableOpacity>
+        
          <TouchableOpacity style={[styles.card, { borderLeftColor: '#e99124', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Camera Details')}>
           <Text style={styles.cardsTitle}>📷 Camera Master</Text>
           <Text style={styles.cardDesc}> Manage Camera</Text>
         </TouchableOpacity>
+
+         <TouchableOpacity style={[styles.card, { borderLeftColor: '#38a169', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Inventory')}>
+          <Text style={styles.invTitle}>📦 Inventory</Text>
+          <Text style={styles.cardDesc}>Track parts and hardware availability</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[styles.card, { borderLeftColor: '#e53e3e', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Box')}>
+          <Text style={[styles.cardTitle, { color: '#e53e3e' }]}>📦 Box Management</Text>
+          <Text style={styles.cardDesc}>Create and assign IoT Boxes to Buses</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={[styles.card, { borderLeftColor: '#263b80', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Trip')}>
           <Text style={styles.tripTitle}>🚌 Trip</Text>
           <Text style={styles.cardDesc}>Manage Trip</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { borderLeftColor: '#38a169', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Inventory')}>
-          <Text style={styles.invTitle}>📦 Inventory</Text>
-          <Text style={styles.cardDesc}>Track parts and hardware availability</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { borderLeftColor: '#805ad5', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Box')}>
-          <Text style={[styles.cardTitle, { color: '#805ad5' }]}>📦 Box Management</Text>
-          <Text style={styles.cardDesc}>Create and assign IoT Boxes to Buses</Text>
-        </TouchableOpacity>
+       
         {/* <TouchableOpacity style={[styles.card, { borderLeftColor: '#e53e3e', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('Add Hardware')}>
           <Text style={[styles.cardTitle, { color: '#e53e3e' }]}>➕ Add Hardware</Text>
           <Text style={styles.cardDesc}>Add new hardware parts</Text>
@@ -46,10 +51,10 @@ export default function Dashboard({ navigation }) {
           <Text style={[styles.cardTitle, { color: '#718096' }]}>❌ Deactivate Part</Text>
           <Text style={styles.cardDesc}>Deactivate hardware parts</Text>
         </TouchableOpacity> */}
-        <TouchableOpacity style={[styles.card, { borderLeftColor: '#d69e2e', borderLeftWidth: 4 }]} onPress={() => Alert.alert('Coming Soon', 'History module is under development.')}>
-          <Text style={styles.hisTitle}>📜 History</Text>
-          <Text style={styles.cardDesc}>View past actions and maintenance records</Text>
-        </TouchableOpacity>
+        {/* <TouchableOpacity style={[styles.card, { borderLeftColor: '#d69e2e', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('History')}>
+          <Text style={styles.hisTitle}>📜Bus Box History</Text>
+          <Text style={styles.cardDesc}>View bus box details and assigned components</Text>
+        </TouchableOpacity> */}
       </View>
     </ScrollView>
   );
@@ -77,6 +82,10 @@ export default function Dashboard({ navigation }) {
         >
           <Text style={[styles.cardTitle, { color: '#ec8909' }]}>📍 GPS Tracking</Text>
           <Text style={styles.cardDesc}>View real-time GPS tracking logs</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.card, { borderLeftColor: '#309f43', borderLeftWidth: 4 }]} onPress={() => navigation.navigate('History')}>
+          <Text style={styles.hisTitle}>📜Bus Box Details</Text>
+          <Text style={styles.cardDesc}>View bus box details and assigned components</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -155,7 +164,7 @@ const styles = StyleSheet.create({
    hisTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#d69e2e',
+    color: '#309f43',
     marginBottom: 4,
   },
    invTitle: {

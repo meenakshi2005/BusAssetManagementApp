@@ -77,6 +77,25 @@ export const getBusesAPI = async () => {
   }
 };
 
+/**
+ * GET /bus-box-details
+ * Fetches all buses with their pi_box, sensor_box, and component details.
+ * Used by the History screen.
+ */
+export const getBusBoxDetailsAPI = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/bus-box-details`);
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to fetch bus box details'));
+    }
+    const json = await response.json();
+    return json.data || [];
+  } catch (error) {
+    console.error('getBusBoxDetailsAPI error:', error);
+    throw error;
+  }
+};
+
 export const createBusAPI = async (busData) => {
   const payload = {
     ...busData,
@@ -318,6 +337,23 @@ export const assignComponentToBoxAPI = async (boxId, componentId) => {
     return await response.json();
   } catch (error) {
     console.error('assignComponentToBoxAPI error:', error);
+    throw error;
+  }
+};
+
+export const removeComponentFromBoxAPI = async (boxId, componentId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/box/${boxId}/remove-component`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ component_id: componentId }),
+    });
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response, 'Failed to remove component from box'));
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('removeComponentFromBoxAPI error:', error);
     throw error;
   }
 };

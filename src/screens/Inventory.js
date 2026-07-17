@@ -23,8 +23,6 @@ import {
   deleteComponentAPI,
   assignComponentToBoxAPI,
   getCamerasAPI,
-  updateCameraAPI,
-  deleteCameraAPI,
 } from '../utils/storage';
 
 export default function Inventory() {
@@ -39,12 +37,7 @@ export default function Inventory() {
 
   const [formLoading, setFormLoading] = useState(false);
 
-  // Camera edit modal state
-  const [cameraEditVisible, setCameraEditVisible] = useState(false);
-  const [cameraEditLoading, setCameraEditLoading] = useState(false);
-  const [cameraFormData, setCameraFormData] = useState({
-    camera_id: '', ip: '', port: '', user: '', password: '', stream: '',
-  });
+
 
   const [scannerVisible, setScannerVisible] = useState(false);
   const [assigningComponentId, setAssigningComponentId] = useState(null);
@@ -90,63 +83,7 @@ export default function Inventory() {
     }
   };
 
-  const openCameraEditModal = (cam) => {
-    setCameraFormData({
-      camera_id: cam.camera_id,
-      ip: cam.ip || '',
-      port: cam.port ? String(cam.port) : '',
-      user: cam.user || '',
-      password: cam.password || '',
-      stream: cam.stream || '',
-    });
-    setCameraEditVisible(true);
-  };
 
-  const handleCameraUpdate = async () => {
-    const { camera_id, ip, port, user, password, stream } = cameraFormData;
-    if (!ip.trim() || !port.trim() || !user.trim() || !password.trim() || !stream.trim()) {
-      Alert.alert('Validation', 'All fields are required.');
-      return;
-    }
-    const portNum = parseInt(port, 10);
-    if (isNaN(portNum)) {
-      Alert.alert('Validation', 'Port must be a valid number.');
-      return;
-    }
-    setCameraEditLoading(true);
-    try {
-      await updateCameraAPI(camera_id, { camera_id, ip: ip.trim(), port: portNum, user: user.trim(), password, stream: stream.trim() });
-      Alert.alert('Success', 'Camera updated successfully.');
-      setCameraEditVisible(false);
-      fetchCameras();
-    } catch (e) {
-      Alert.alert('Error', e.message || 'Failed to update camera.');
-    } finally {
-      setCameraEditLoading(false);
-    }
-  };
-
-  const handleCameraDelete = (camera_id) => {
-    Alert.alert('Delete Camera', `Delete camera "${camera_id}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteCameraAPI(camera_id);
-            Alert.alert('Success', 'Camera deleted.');
-            // If the deleted camera was selected, clear the selection
-            if (formData.camera_id === camera_id) {
-              handleInputChange('camera_id', '');
-            }
-            fetchCameras();
-          } catch (e) {
-            Alert.alert('Error', e.message || 'Failed to delete camera.');
-          }
-        },
-      },
-    ]);
-  };
 
   const fetchInventory = async () => {
     setIsLoading(true);
@@ -455,12 +392,12 @@ export default function Inventory() {
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>Category *</Text>
-                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: 16 }}>
+                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: 14 }}>
                   <Picker
                     selectedValue={formData.category}
                     onValueChange={(val) => handleInputChange('category', val)}
                     mode="dropdown"
-                    style={{ height: 50, color: formData.category ? '#2d3748' : '#a0aec0' }}
+                    style={{ height: 50, color: formData.category ? '#2d3748' : '#a0aec0',fontSize:13 }}
                   >
                     <Picker.Item label="Select Category..." value="" color="#a0aec0" />
                     <Picker.Item label="GPS" value="gps" color="#2d3748" />
@@ -511,7 +448,7 @@ export default function Inventory() {
             </View>
 
             <View style={styles.inputRow}>
-              <View style={styles.inputHalf}>
+              <View style={styles.inputHalfN}>
                 <Text style={styles.label}>Invoice Number</Text>
                 <TextInput
                   style={styles.input}
@@ -520,7 +457,7 @@ export default function Inventory() {
                   placeholder="e.g. INV-001"
                 />
               </View>
-              <View style={styles.inputHalf}>
+              {/* <View style={styles.inputHalf}>
                 <Text style={styles.label}>Status</Text>
                 <TextInput
                   style={styles.input}
@@ -528,7 +465,7 @@ export default function Inventory() {
                   onChangeText={(val) => handleInputChange('status', val)}
                   placeholder="e.g. In Stock"
                 />
-              </View>
+              </View> */}
             </View>
 
             <View style={styles.inputRow}>
@@ -548,7 +485,7 @@ export default function Inventory() {
                     selectedValue={formData.position}
                     onValueChange={(val) => handleInputChange('position', val)}
                     mode="dropdown"
-                    style={{ height: 50, color: formData.position ? '#2d3748' : '#a0aec0' }}
+                    style={{ height: 50, color: formData.position ? '#2d3748' : '#a0aec0', fontSize:13 }}
                   >
                     <Picker.Item label="Select Position..." value="" color="#a0aec0" />
                     <Picker.Item label="Start" value="start" color="#2d3748" />
@@ -559,50 +496,30 @@ export default function Inventory() {
               </View>
             </View>
 
-            {/* Camera Dropdown with Edit/Delete actions */}
-            <View style={styles.inputFull}>
-              <Text style={styles.label}>Camera</Text>
-              <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: formData.camera_id ? 8 : 16 }}>
-                <Picker
-                  selectedValue={formData.camera_id}
-                  onValueChange={(val) => handleInputChange('camera_id', val)}
-                  mode="dropdown"
-                  style={{ height: 50, color: formData.camera_id ? '#2d3748' : '#a0aec0' }}
-                >
-                  <Picker.Item label="None (No Camera)" value="" color="#a0aec0" />
-                  {cameras.map((cam) => (
-                    <Picker.Item
-                      key={cam.camera_id}
-                      label={`${cam.camera_id}  (${cam.ip}:${cam.port})`}
-                      value={cam.camera_id}
-                      color="#2d3748"
-                    />
-                  ))}
-                </Picker>
-              </View>
-              {/* Edit / Delete buttons — shown only when a camera is selected */}
-              {formData.camera_id ? (
-                <View style={styles.cameraActionRow}>
-                  <TouchableOpacity
-                    style={styles.cameraEditBtn}
-                    onPress={() => {
-                      const cam = cameras.find((c) => c.camera_id === formData.camera_id);
-                      if (cam) openCameraEditModal(cam);
-                    }}
+            {/* Camera Dropdown */}
+            {(formData.category === 'gate_camera' || formData.category === 'fullbus_camera') && (
+              <View style={styles.inputFull}>
+                <Text style={styles.label}>Camera</Text>
+                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc', overflow: 'hidden', marginBottom: 16 }}>
+                  <Picker
+                    selectedValue={formData.camera_id}
+                    onValueChange={(val) => handleInputChange('camera_id', val)}
+                    mode="dropdown"
+                    style={{ height: 50, color: formData.camera_id ? '#2d3748' : '#a0aec0' }}
                   >
-                    <Feather name="edit-2" size={14} color="#3182ce" />
-                    <Text style={styles.cameraEditBtnText}>Edit Camera</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cameraDeleteBtn}
-                    onPress={() => handleCameraDelete(formData.camera_id)}
-                  >
-                    <Feather name="trash-2" size={14} color="#e53e3e" />
-                    <Text style={styles.cameraDeleteBtnText}>Delete Camera</Text>
-                  </TouchableOpacity>
+                    <Picker.Item label="None (No Camera)" value="" color="#a0aec0" />
+                    {cameras.map((cam) => (
+                      <Picker.Item
+                        key={cam.camera_id}
+                        label={`${cam.camera_id}  (${cam.ip}:${cam.port})`}
+                        value={cam.camera_id}
+                        color="#2d3748"
+                      />
+                    ))}
+                  </Picker>
                 </View>
-              ) : null}
-            </View>
+              </View>
+            )}
 
             <View style={styles.inputFull}>
               <Text style={styles.label}>Notes</Text>
@@ -661,47 +578,7 @@ export default function Inventory() {
         </View>
       </Modal>
 
-      {/* Camera Edit Modal */}
-      <Modal visible={cameraEditVisible} animationType="fade" transparent onRequestClose={() => setCameraEditVisible(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.cameraModalOverlay}>
-          <View style={styles.cameraModalContent}>
-            <View style={styles.cameraModalHeader}>
-              <Text style={styles.cameraModalTitle}>Edit Camera</Text>
-              <TouchableOpacity onPress={() => setCameraEditVisible(false)}>
-                <Feather name="x" size={20} color="#4a5568" />
-              </TouchableOpacity>
-            </View>
 
-            {[['IP Address', 'ip', 'default'], ['Port', 'port', 'numeric'], ['Username', 'user', 'default'], ['Password', 'password', 'default'], ['Stream Path', 'stream', 'default']].map(([label, field, kb]) => (
-              <View key={field} style={{ marginBottom: 10 }}>
-                <Text style={styles.cameraModalLabel}>{label}</Text>
-                <TextInput
-                  style={styles.cameraModalInput}
-                  value={cameraFormData[field]}
-                  onChangeText={(v) => setCameraFormData((prev) => ({ ...prev, [field]: v }))}
-                  keyboardType={kb}
-                  secureTextEntry={field === 'password'}
-                  placeholder={label}
-                  placeholderTextColor="#a0aec0"
-                />
-              </View>
-            ))}
-
-            <View style={styles.cameraModalButtons}>
-              <TouchableOpacity style={styles.cameraModalCancelBtn} onPress={() => setCameraEditVisible(false)}>
-                <Text style={{ color: '#4a5568', fontWeight: '600' }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.cameraModalSaveBtn, cameraEditLoading && { opacity: 0.6 }]}
-                onPress={handleCameraUpdate}
-                disabled={cameraEditLoading}
-              >
-                {cameraEditLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#fff', fontWeight: '700' }}>Update</Text>}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
     </View>
   );
@@ -711,104 +588,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f7fa',
-  },
-  // Camera action row
-  cameraActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-  cameraEditBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#ebf8ff',
-    borderWidth: 1,
-    borderColor: '#bee3f8',
-  },
-  cameraEditBtnText: {
-    color: '#3182ce',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  cameraDeleteBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#fff5f5',
-    borderWidth: 1,
-    borderColor: '#fed7d7',
-  },
-  cameraDeleteBtnText: {
-    color: '#e53e3e',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  // Camera edit modal
-  cameraModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  cameraModalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-  },
-  cameraModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  cameraModalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#2d3748',
-  },
-  cameraModalLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#4a5568',
-    marginBottom: 4,
-  },
-  cameraModalInput: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 14,
-    color: '#2d3748',
-    backgroundColor: '#f7fafc',
-  },
-  cameraModalButtons: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 16,
-  },
-  cameraModalCancelBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 11,
-    borderRadius: 8,
-    backgroundColor: '#edf2f7',
-  },
-  cameraModalSaveBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 11,
-    borderRadius: 8,
-    backgroundColor: '#3182ce',
   },
   headerRow: {
     flexDirection: 'row',
@@ -920,7 +699,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bold: {
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#2d3748',
   },
   actionRow: {
@@ -977,6 +756,9 @@ const styles = StyleSheet.create({
   inputHalf: {
     width: '48%',
   },
+   inputHalfN: {
+    width: '100%',
+  },
   inputFull: {
     width: '100%',
   },
@@ -991,7 +773,7 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
+    fontSize: 13,
     backgroundColor: '#f8fafc',
     color: '#2d3748',
     marginBottom: 16,

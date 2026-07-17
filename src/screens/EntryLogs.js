@@ -363,13 +363,12 @@ export default function EntryLogs() {
           ...(selectedTrip ? { trip_id: selectedTrip } : {}),
           ...(fromDate
             ? {
-                date: formatDateStr(fromDate),
-                start_time: formatTimeStr(fromDate),
+                start_datetime: `${formatDateStr(fromDate)}T${formatTimeStr(fromDate)}`,
               }
             : {}),
           ...(toDate
             ? {
-                end_time: formatTimeStr(toDate),
+                end_datetime: `${formatDateStr(toDate)}T${formatTimeStr(toDate)}`,
               }
             : {}),
         };

@@ -16,6 +16,7 @@ import FaceCaptures from './src/screens/FaceCaptures';
 import Trip from './src/screens/Trip';
 import GPSTracking from './src/screens/GPSTracking';
 import CameraDetails from './src/screens/CameraDetails';
+import History from './src/screens/History';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +39,7 @@ export default function App() {
           <Stack.Screen name="Trip" component={Trip} options={{ title: 'Trips' }} />
           <Stack.Screen name="GPS Tracking" component={GPSTracking} />
           <Stack.Screen name="Camera Details" component={CameraDetails} options={{ title: 'Camera Master' }} />
+          <Stack.Screen name="History" component={History} options={{ title: 'Bus Box Details' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

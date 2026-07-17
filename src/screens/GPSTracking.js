@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,13 +7,13 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-} from 'react-native';
-import MapView, { Polyline, Marker } from 'react-native-maps';
-import { Picker } from '@react-native-picker/picker';
-import { getGPSTrackingLogsAPI } from '../utils/tripAPI';
-import { getBusesAPI } from '../utils/storage';
+} from "react-native";
+import MapView, { PROVIDER_GOOGLE, Polyline, Marker } from 'react-native-maps';
+import { Picker } from "@react-native-picker/picker";
+import { getGPSTrackingLogsAPI } from "../utils/tripAPI";
+import { getBusesAPI } from "../utils/storage";
 
-const PAGE_LIMIT = 100;
+const PAGE_LIMIT = 1000;
 
 // Default fallback region (India center) shown when GPS coordinates are null
 const DEFAULT_REGION = {
@@ -27,11 +27,12 @@ const GPSTracking = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [buses, setBuses] = useState([]);
-  const [selectedBus, setSelectedBus] = useState('');
-  const [totalLogs, setTotalLogs] = useState(0);
+  const [selectedBus, setSelectedBus] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
+  const [gpsRecordCount, setGpsRecordCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentOffset, setCurrentOffset] = useState(0);
 
   const mapRef = useRef(null);
   const currentRegionRef = useRef(DEFAULT_REGION);
@@ -44,8 +45,10 @@ const GPSTracking = () => {
 
   useEffect(() => {
     setLogs([]);
-    setPage(1);
-    setTotalLogs(0);
+    setCurrentOffset(0);
+    setTotalCount(0);
+    setGpsRecordCount(0);
+    setHasMore(true);
     fetchLogs(0, selectedBus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBus]);
@@ -55,7 +58,7 @@ const GPSTracking = () => {
       const busList = await getBusesAPI();
       setBuses(busList || []);
     } catch (error) {
-      console.log('Error fetching buses', error);
+      console.log("Error fetching buses", error);
     }
   };
 
@@ -66,23 +69,29 @@ const GPSTracking = () => {
     if (offset === 0) setMapLoading(true);
 
     try {
-      const response = await getGPSTrackingLogsAPI(PAGE_LIMIT, offset, '', currentBus);
+      const response = await getGPSTrackingLogsAPI(
+        PAGE_LIMIT,
+        offset,
+        "",
+        currentBus,
+      );
       if (response && response.logs) {
-        setLogs(prev => (offset === 0 ? response.logs : [...prev, ...response.logs]));
-
-        const calculatedPage = Math.floor(offset / PAGE_LIMIT) + 1;
-        const reachedEnd = response.logs.length < PAGE_LIMIT;
-
-        setPage(response.page || calculatedPage);
-        setTotalPages(
-          reachedEnd
-            ? response.page || calculatedPage
-            : response.total_pages || calculatedPage + 1
+        const newLogs = response.logs;
+        setLogs((prev) =>
+          offset === 0 ? newLogs : [...prev, ...newLogs],
         );
-        setTotalLogs(response.total || 0);
+
+        setTotalCount(response.count || 0);
+        setGpsRecordCount(response.gps_records || 0);
+
+        const nextOffset = offset + newLogs.length;
+        setCurrentOffset(nextOffset);
+        setHasMore(newLogs.length >= PAGE_LIMIT);
+      } else {
+        setHasMore(false);
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to fetch GPS logs');
+      Alert.alert("Error", error.message || "Failed to fetch GPS logs");
     } finally {
       loadingRef.current = false;
       setLoading(false);
@@ -91,8 +100,8 @@ const GPSTracking = () => {
   };
 
   const handleLoadMore = () => {
-    if (page < totalPages && !loadingRef.current) {
-      fetchLogs(page * PAGE_LIMIT);
+    if (hasMore && !loadingRef.current) {
+      fetchLogs(currentOffset);
     }
   };
 
@@ -101,7 +110,9 @@ const GPSTracking = () => {
       <View style={styles.logRow}>
         <Text style={styles.logLabel}>📡 GPS Time:</Text>
         <Text style={styles.logValue}>
-          {item.gps_timestamp ? new Date(item.gps_timestamp).toLocaleString() : '—'}
+          {item.gps_timestamp
+            ? new Date(item.gps_timestamp).toLocaleString()
+            : "—"}
         </Text>
       </View>
 
@@ -109,10 +120,12 @@ const GPSTracking = () => {
 
       <View style={styles.logRow}>
         <Text style={styles.logLabel}>📍 Location:</Text>
-        <Text style={[styles.logValue, item.latitude == null && styles.nullValue]}>
+        <Text
+          style={[styles.logValue, item.latitude == null && styles.nullValue]}
+        >
           {item.latitude != null && item.longitude != null
             ? `${Number(item.latitude).toFixed(6)}, ${Number(item.longitude).toFixed(6)}`
-            : 'GPS fix not acquired'}
+            : "GPS fix not acquired"}
         </Text>
       </View>
 
@@ -122,7 +135,7 @@ const GPSTracking = () => {
           <Text style={styles.logBadgeValue}>
             {item.speed_kmh != null
               ? `${Number(item.speed_kmh).toFixed(2)} km/h`
-              : `${item.speed ?? '—'} km/h`}
+              : `${item.speed ?? "—"} km/h`}
           </Text>
         </View>
         <View style={styles.logBadge}>
@@ -130,13 +143,16 @@ const GPSTracking = () => {
           <Text style={styles.logBadgeValue}>
             {item.heading_deg != null
               ? `${Number(item.heading_deg).toFixed(1)}°`
-              : `${item.heading ?? '—'}°`}
+              : `${item.heading ?? "—"}°`}
           </Text>
         </View>
         <View style={[styles.logBadge, styles.logBadgeTopic]}>
           <Text style={styles.logBadgeLabel}>Topic</Text>
-          <Text style={[styles.logBadgeValue, styles.logBadgeTopicText]} numberOfLines={1}>
-            {item.topic ? item.topic.split('/').pop() : '—'}
+          <Text
+            style={[styles.logBadgeValue, styles.logBadgeTopicText]}
+            numberOfLines={1}
+          >
+            {item.topic ? item.topic.split("/").pop() : "—"}
           </Text>
         </View>
       </View>
@@ -146,13 +162,13 @@ const GPSTracking = () => {
   // Extract coordinates for Polyline, filter out null lat/lng
   const coordinates = logs
     .filter(
-      log =>
+      (log) =>
         log.latitude != null &&
         log.longitude != null &&
         !isNaN(Number(log.latitude)) &&
-        !isNaN(Number(log.longitude))
+        !isNaN(Number(log.longitude)),
     )
-    .map(log => ({
+    .map((log) => ({
       latitude: Number(log.latitude),
       longitude: Number(log.longitude),
     }))
@@ -209,9 +225,9 @@ const GPSTracking = () => {
 
   const getMapStatusText = () => {
     if (mapLoading) return null;
-    if (logs.length === 0) return 'No GPS logs received from server.';
+    if (logs.length === 0) return "No GPS logs received from server.";
     if (!hasCoordinates) {
-      return `${nullCoordCount} log${nullCoordCount !== 1 ? 's' : ''} received — GPS fix not yet acquired (lat/lng null).`;
+      return `${nullCoordCount} log${nullCoordCount !== 1 ? "s" : ""} received — GPS fix not yet acquired (lat/lng null).`;
     }
     return null;
   };
@@ -226,7 +242,7 @@ const GPSTracking = () => {
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedBus}
-            onValueChange={itemValue => setSelectedBus(itemValue)}
+            onValueChange={(itemValue) => setSelectedBus(itemValue)}
             style={styles.picker}
           >
             <Picker.Item label="All Buses" value="" />
@@ -244,22 +260,29 @@ const GPSTracking = () => {
       {/* Map Section */}
       <View style={styles.mapContainer}>
         {mapLoading ? (
-          <View style={[styles.map, styles.centerContainer, styles.mapLoadingBg]}>
+          <View
+            style={[styles.map, styles.centerContainer, styles.mapLoadingBg]}
+          >
             <ActivityIndicator size="large" color="#805ad5" />
             <Text style={styles.mapLoadingText}>Loading map data…</Text>
           </View>
         ) : (
           <>
             <MapView
+              provider={PROVIDER_GOOGLE}
               ref={mapRef}
               style={styles.map}
               initialRegion={DEFAULT_REGION}
-              onRegionChangeComplete={region => {
+              onRegionChangeComplete={(region) => {
                 currentRegionRef.current = region;
               }}
             >
               {hasCoordinates && coordinates.length > 1 && (
-                <Polyline coordinates={coordinates} strokeColor="#805ad5" strokeWidth={4} />
+                <Polyline
+                  coordinates={coordinates}
+                  strokeColor="#805ad5"
+                  strokeWidth={4}
+                />
               )}
               {hasCoordinates && (
                 <Marker
@@ -272,10 +295,18 @@ const GPSTracking = () => {
 
             {/* Zoom Controls */}
             <View style={styles.zoomControls}>
-              <TouchableOpacity style={styles.zoomBtn} onPress={zoomIn} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.zoomBtn}
+                onPress={zoomIn}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.zoomBtnText}>+</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.zoomBtn} onPress={zoomOut} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.zoomBtn}
+                onPress={zoomOut}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.zoomBtnText}>−</Text>
               </TouchableOpacity>
               {hasCoordinates && (
@@ -309,20 +340,28 @@ const GPSTracking = () => {
         ) : (
           <FlatList
             data={logs}
-            keyExtractor={(item, index) => (item.id ? item.id.toString() : index.toString())}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
             renderItem={renderLog}
             contentContainerStyle={styles.listContainer}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
             ListFooterComponent={
               loading && logs.length > 0 ? (
-                <ActivityIndicator size="small" color="#805ad5" style={styles.footerLoader} />
+                <ActivityIndicator
+                  size="small"
+                  color="#805ad5"
+                  style={styles.footerLoader}
+                />
               ) : null
             }
             ListEmptyComponent={
               !loading ? (
                 <View style={styles.centerContainer}>
-                  <Text style={styles.emptyText}>No GPS tracking logs found.</Text>
+                  <Text style={styles.emptyText}>
+                    No GPS tracking logs found.
+                  </Text>
                 </View>
               ) : null
             }
@@ -336,101 +375,101 @@ const GPSTracking = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   filterSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
     zIndex: 10,
   },
   filterLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginRight: 10,
   },
   pickerContainer: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
-    backgroundColor: '#fafafa',
+    backgroundColor: "#fafafa",
   },
   picker: {
     height: 50,
-    width: '100%',
+    width: "100%",
   },
   mapContainer: {
     flex: 0.4,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   mapLoadingBg: {
-    backgroundColor: '#ede9f6',
+    backgroundColor: "#ede9f6",
   },
   mapLoadingText: {
     marginTop: 10,
-    color: '#805ad5',
+    color: "#805ad5",
     fontSize: 14,
   },
   zoomControls: {
-    position: 'absolute',
+    position: "absolute",
     right: 12,
-    top: '50%',
+    top: "50%",
     transform: [{ translateY: -52 }],
-    alignItems: 'center',
+    alignItems: "center",
     gap: 6,
   },
   zoomBtn: {
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    backgroundColor: "rgba(255,255,255,0.92)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 5,
     borderWidth: 1,
-    borderColor: '#e0d7f8',
+    borderColor: "#e0d7f8",
   },
   zoomBtnText: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#805ad5',
+    fontWeight: "700",
+    color: "#805ad5",
     lineHeight: 26,
   },
   fitBtn: {
-    backgroundColor: 'rgba(128,90,213,0.12)',
-    borderColor: '#805ad5',
+    backgroundColor: "rgba(128,90,213,0.12)",
+    borderColor: "#805ad5",
     marginTop: 4,
   },
   fitBtnText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#805ad5',
+    fontWeight: "700",
+    color: "#805ad5",
   },
   mapBanner: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 8,
     left: 12,
     right: 12,
-    backgroundColor: 'rgba(255,255,255,0.93)',
+    backgroundColor: "rgba(255,255,255,0.93)",
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.12,
     shadowRadius: 4,
     elevation: 3,
@@ -442,15 +481,15 @@ const styles = StyleSheet.create({
   mapBannerText: {
     flex: 1,
     fontSize: 12,
-    color: '#555',
+    color: "#555",
   },
   listSection: {
     flex: 0.6,
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContainer: {
     padding: 16,
@@ -459,81 +498,81 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   logCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 14,
     marginBottom: 12,
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
     borderLeftWidth: 4,
-    borderLeftColor: '#805ad5',
+    borderLeftColor: "#805ad5",
   },
   logDivider: {
     height: 1,
-    backgroundColor: '#f0ebfa',
+    backgroundColor: "#f0ebfa",
     marginVertical: 8,
   },
   logRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 5,
   },
   logRowGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 8,
     gap: 6,
   },
   logBadge: {
     flex: 1,
-    backgroundColor: '#f8f6ff',
+    backgroundColor: "#f8f6ff",
     borderRadius: 8,
     padding: 8,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#e0d7f8',
+    borderColor: "#e0d7f8",
   },
   logBadgeTopic: {
     flex: 1.2,
-    backgroundColor: '#fff7ed',
-    borderColor: '#fcd9a8',
+    backgroundColor: "#fff7ed",
+    borderColor: "#fcd9a8",
   },
   logBadgeLabel: {
     fontSize: 10,
-    color: '#888',
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    color: "#888",
+    fontWeight: "600",
+    textTransform: "uppercase",
     marginBottom: 3,
   },
   logBadgeValue: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#4a2d8f',
+    fontWeight: "700",
+    color: "#4a2d8f",
   },
   logBadgeTopicText: {
-    color: '#b45309',
+    color: "#b45309",
     fontSize: 11,
   },
   logLabel: {
-    fontWeight: '600',
-    color: '#555',
+    fontWeight: "600",
+    color: "#555",
     fontSize: 12,
   },
   logValue: {
-    color: '#333',
+    color: "#333",
     flexShrink: 1,
-    textAlign: 'right',
+    textAlign: "right",
     fontSize: 12,
   },
   nullValue: {
-    color: '#c05621',
-    fontStyle: 'italic',
+    color: "#c05621",
+    fontStyle: "italic",
   },
   emptyText: {
     fontSize: 16,
-    color: '#777',
+    color: "#777",
   },
 });
 

@@ -170,16 +170,14 @@ const PassengerCard = ({ paxId, busId, fromDate, toDate, onPress }) => {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const dateStr   = formatDateStr(fromDate);
-        const startStr  = formatTimeStr(fromDate);
-        const endStr    = formatTimeStr(toDate);
+        const startDt = `${formatDateStr(fromDate)}T${formatTimeStr(fromDate)}`;
+        const endDt   = `${formatDateStr(toDate)}T${formatTimeStr(toDate)}`;
 
         const url =
           `https://exhibitnow.world/processed/passenger/${paxId}` +
-          `?bus_id=${busId}` +
-          `&date=${dateStr}` +
-          `&start_time=${encodeURIComponent(startStr)}` +
-          `&end_time=${encodeURIComponent(endStr)}`;
+          `?start_datetime=${encodeURIComponent(startDt)}` +
+          `&end_datetime=${encodeURIComponent(endDt)}` +
+          (busId ? `&bus_id=${busId}` : '');
 
         const res = await fetch(url);
         if (res.ok) {
@@ -324,23 +322,17 @@ export default function FaceCaptures() {
   }, []);
 
   const fetchSummary = async () => {
-    if (!selectedBus) {
-      setError('Please select a bus first.');
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      const dateStr  = formatDateStr(fromDate);
-      const startStr = formatTimeStr(fromDate);
-      const endStr   = formatTimeStr(toDate);
+      const startDt = `${formatDateStr(fromDate)}T${formatTimeStr(fromDate)}`;
+      const endDt   = `${formatDateStr(toDate)}T${formatTimeStr(toDate)}`;
 
       const url =
         `https://exhibitnow.world/processed/summary` +
-        `?bus_id=${selectedBus}` +
-        `&date=${dateStr}` +
-        `&start_time=${encodeURIComponent(startStr)}` +
-        `&end_time=${encodeURIComponent(endStr)}`;
+        `?start_datetime=${encodeURIComponent(startDt)}` +
+        `&end_datetime=${encodeURIComponent(endDt)}` +
+        (selectedBus ? `&bus_id=${selectedBus}` : '');
 
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);

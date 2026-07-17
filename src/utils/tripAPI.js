@@ -116,15 +116,24 @@ export const deleteTripAPI = async (tripId) => {
  * @param {number} offset 
  * @param {string} deviceId 
  * @param {string} busId 
+ * @param {string} tripId 
  */
-export const getGPSTrackingLogsAPI = async (limit = 100, offset = 0, deviceId = '', busId = '') => {
+export const getGPSTrackingLogsAPI = async (limit = 100, offset = 0, deviceId = '', busId = '', tripId = '') => {
   try {
-    const params = new URLSearchParams({
+    const rawParams = {
       limit: limit.toString(),
       offset: offset.toString(),
       device_id: deviceId,
       bus_id: busId,
-    });
+      trip_id: tripId,
+    };
+
+    // Only include params that have a value
+    const filteredParams = Object.fromEntries(
+      Object.entries(rawParams).filter(([, value]) => value !== '' && value != null),
+    );
+
+    const params = new URLSearchParams(filteredParams);
     const response = await fetch(`${BASE_URL}/gps/tracking?${params.toString()}`);
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));

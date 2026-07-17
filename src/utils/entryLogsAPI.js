@@ -4,10 +4,10 @@ export const getEntryLogsAPI = async ({
   limit = 100,
   offset = 0,
   bus_id = '',
+  trip_id = '',
   direction = '',
-  date = '',
-  start_time = '',
-  end_time = '',
+  start_datetime = '',
+  end_datetime = '',
 } = {}) => {
   try {
     // Only include params that actually have a value — sending empty
@@ -18,10 +18,10 @@ export const getEntryLogsAPI = async ({
       limit: limit.toString(),
       offset: offset.toString(),
       bus_id,
+      trip_id,
       direction,
-      date,
-      start_time,
-      end_time,
+      start_datetime,
+      end_datetime,
     };
 
     const filteredParams = Object.fromEntries(

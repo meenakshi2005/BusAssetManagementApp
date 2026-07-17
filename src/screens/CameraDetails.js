@@ -26,7 +26,7 @@ const initialFormState = {
   camera_id: '',
   ip: '',
   port: '',
-  user: '',
+  user: 'Admin',
   password: '',
   stream: '',
 };
@@ -198,8 +198,8 @@ export default function CameraDetails() {
         </ScrollView>
       )}
 
-      {/* Create / Edit Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+      {/* Create / Edit Modal — compact, fixed layout, no inner scrolling */}
+      <Modal visible={modalVisible} animationType="fade" transparent onRequestClose={() => setModalVisible(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -209,52 +209,78 @@ export default function CameraDetails() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* <FormField
+            {/* Form fields — scrollable so it never gets cut off, header/button stay fixed */}
+            <ScrollView
+              style={styles.formScroll}
+              contentContainerStyle={styles.formScrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Camera ID — full width */}
+              <FormField
+                compact
                 label="Camera ID"
                 placeholder="e.g. CAM-001"
                 value={formData.camera_id}
                 onChangeText={(v) => handleInputChange('camera_id', v)}
-                editable={!editingId} // ID immutable when editing
-              /> */}
-              <FormField
-                label="IP Address"
-                placeholder="e.g. 192.168.1.100"
-                value={formData.ip}
-                onChangeText={(v) => handleInputChange('ip', v)}
-                keyboardType="default"
+                editable={!editingId}
               />
-              <FormField
-                label="Port"
-                placeholder="e.g. 5543"
-                value={formData.port}
-                onChangeText={(v) => handleInputChange('port', v)}
-                keyboardType="numeric"
-              />
-              <FormField
-                label="Username"
-                placeholder="e.g. admin"
-                value={formData.user}
-                onChangeText={(v) => handleInputChange('user', v)}
-              />
-              {/* Password row with show/hide */}
-              <View style={styles.fieldWrapper}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <View style={styles.passwordRow}>
-                  <TextInput
-                    style={[styles.fieldInput, { flex: 1, borderWidth: 0, marginBottom: 0 }]}
-                    placeholder="Enter password"
-                    placeholderTextColor="#a0aec0"
-                    value={formData.password}
-                    onChangeText={(v) => handleInputChange('password', v)}
-                    secureTextEntry={!showPassword}
+
+              {/* IP + Port on one row */}
+              <View style={styles.fieldRow}>
+                <View style={{ flex: 2, marginRight: 8 }}>
+                  <FormField
+                    compact
+                    label="IP Address"
+                    placeholder="192.168.1.100"
+                    value={formData.ip}
+                    onChangeText={(v) => handleInputChange('ip', v)}
                   />
-                  <TouchableOpacity onPress={() => setShowPassword((p) => !p)} style={styles.eyeBtn}>
-                    <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#718096" />
-                  </TouchableOpacity>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FormField
+                    compact
+                    label="Port"
+                    placeholder="5543"
+                    value={formData.port}
+                    onChangeText={(v) => handleInputChange('port', v)}
+                    keyboardType="numeric"
+                  />
                 </View>
               </View>
+
+              {/* Username + Password on one row */}
+              <View style={styles.fieldRow}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <FormField
+                    compact
+                    label="Username"
+                    placeholder="admin"
+                    value={formData.user}
+                    onChangeText={(v) => handleInputChange('user', v)}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Password</Text>
+                  <View style={styles.passwordRow}>
+                    <TextInput
+                      style={[styles.fieldInput, styles.compactInput, { flex: 1, borderWidth: 0, marginBottom: 0 }]}
+                      placeholder="Password"
+                      placeholderTextColor="#a0aec0"
+                      value={formData.password}
+                      onChangeText={(v) => handleInputChange('password', v)}
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword((p) => !p)} style={styles.eyeBtn}>
+                      <Feather name={showPassword ? 'eye-off' : 'eye'} size={17} color="#718096" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* Stream Path — full width */}
               <FormField
+                compact
                 label="Stream Path"
                 placeholder="e.g. /live/channel1"
                 value={formData.stream}
@@ -324,12 +350,12 @@ function CameraCard({ item, onEdit, onDelete }) {
 }
 
 /* ─── Reusable Form Field ─────────────────────────────── */
-function FormField({ label, placeholder, value, onChangeText, keyboardType = 'default', editable = true }) {
+function FormField({ label, placeholder, value, onChangeText, keyboardType = 'default', editable = true, compact = false }) {
   return (
-    <View style={styles.fieldWrapper}>
+    <View style={[styles.fieldWrapper, compact && styles.fieldWrapperCompact]}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
-        style={[styles.fieldInput, !editable && styles.fieldInputDisabled]}
+        style={[styles.fieldInput, compact && styles.compactInput, !editable && styles.fieldInputDisabled]}
         placeholder={placeholder}
         placeholderTextColor="#a0aec0"
         value={value}
@@ -435,30 +461,36 @@ const styles = StyleSheet.create({
   detailText: { fontSize: 13, color: '#4a5568', flex: 1 },
   timestampText: { fontSize: 11, color: '#a0aec0', marginTop: 8 },
 
-  // Modal
+  // Modal — opens from the top, sized to content, no inner ScrollView needed
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    maxHeight: '90%',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 22,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#2d3748' },
 
   // Form
+  formScroll: { flexGrow: 0 },
+  formScrollContent: { paddingBottom: 4 },
+  fieldRow: { flexDirection: 'row' },
   fieldWrapper: { marginBottom: 14 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#4a5568', marginBottom: 6 },
+  fieldWrapperCompact: { marginBottom: 12 },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#4a5568', marginBottom: 5 },
   fieldInput: {
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -469,6 +501,7 @@ const styles = StyleSheet.create({
     color: '#2d3748',
     backgroundColor: '#f7fafc',
   },
+  compactInput: { paddingVertical: 9, fontSize: 13.5 },
   fieldInputDisabled: { backgroundColor: '#edf2f7', color: '#a0aec0' },
   passwordRow: {
     flexDirection: 'row',
@@ -477,17 +510,17 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderRadius: 9,
     backgroundColor: '#f7fafc',
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
   },
   eyeBtn: { padding: 4 },
 
   // Submit
   submitButton: {
     backgroundColor: ACCENT,
-    paddingVertical: 14,
+    paddingVertical: 13,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

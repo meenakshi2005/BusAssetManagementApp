@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -13,6 +14,7 @@ import {
 export default function Login({ navigation }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
     if (!username || !password) {
@@ -52,13 +54,21 @@ export default function Login({ navigation }) {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="#718096" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -117,6 +127,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#2d3748',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#edf2f7',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#2d3748',
+  },
+  eyeIcon: {
+    padding: 10,
+    marginRight: 6,
   },
   loginButton: {
     backgroundColor: '#3182ce',
